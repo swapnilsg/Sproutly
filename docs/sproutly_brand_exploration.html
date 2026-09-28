@@ -1,0 +1,256 @@
+
+<style>
+  .wrap { padding: 16px 0; font-size: 14px; }
+  .section { margin-bottom: 32px; }
+  .section-label { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-tertiary); margin-bottom: 14px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  /* Logo concept cards */
+  .logo-card { flex: 1; min-width: 140px; border: 0.5px solid var(--color-border-tertiary); border-radius: 12px; padding: 20px 14px; text-align: center; background: var(--color-background-primary); }
+  .logo-display { height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .logo-card-name { font-size: 12px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+  .logo-card-desc { font-size: 11px; color: var(--color-text-tertiary); line-height: 1.5; }
+
+  /* SVG logo marks */
+  .sprout-mark svg { overflow: visible; }
+
+  /* Palette */
+  .palette-row { display: flex; gap: 8px; }
+  .swatch-group { flex: 1; }
+  .swatch { height: 52px; border-radius: 8px; margin-bottom: 6px; }
+  .swatch-name { font-size: 11px; font-weight: 500; color: var(--color-text-primary); }
+  .swatch-hex  { font-size: 10px; color: var(--color-text-tertiary); }
+  .swatch-role { font-size: 10px; color: var(--color-text-secondary); margin-top: 2px; }
+
+  /* Typography */
+  .font-row { display: flex; gap: 12px; }
+  .font-card { flex: 1; border: 0.5px solid var(--color-border-tertiary); border-radius: 10px; padding: 16px; background: var(--color-background-primary); }
+  .font-sample { margin-bottom: 8px; }
+  .font-label { font-size: 11px; color: var(--color-text-tertiary); }
+
+  /* Domain */
+  .domain-list { display: flex; flex-direction: column; gap: 6px; }
+  .domain-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); }
+  .domain-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+  .domain-note { font-size: 11px; color: var(--color-text-secondary); }
+  .badge { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; }
+  .badge-go   { background: #EAF3DE; color: #27500A; }
+  .badge-maybe { background: #FAEEDA; color: #633806; }
+  .badge-risk  { background: #FCEBEB; color: #791F1F; }
+
+  /* Wordmark preview */
+  .wordmark-preview { display: flex; flex-direction: column; gap: 10px; }
+  .wm-bg { border-radius: 10px; padding: 20px 24px; display: flex; align-items: center; gap: 14px; }
+  .wm-light { background: #ffffff; border: 0.5px solid var(--color-border-tertiary); }
+  .wm-dark  { background: #1a2e1a; }
+  .wm-green { background: #1D9E75; }
+</style>
+
+<div class="wrap">
+
+  <!-- LOGO CONCEPTS -->
+  <div class="section">
+    <div class="section-label">Logo mark concepts</div>
+    <div class="row">
+
+      <!-- Concept A: Single sprout -->
+      <div class="logo-card">
+        <div class="logo-display">
+          <svg width="56" height="72" viewBox="0 0 56 72">
+            <line x1="28" y1="68" x2="28" y2="30" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M28 30 Q28 14 42 14 Q42 28 28 30Z" fill="#1D9E75"/>
+            <path d="M28 44 Q28 30 14 28 Q14 42 28 44Z" fill="#5DCAA5"/>
+          </svg>
+        </div>
+        <div class="logo-card-name">Single sprout</div>
+        <div class="logo-card-desc">Classic seedling with two leaves. Clean, iconic, infinitely scalable from favicon to billboard.</div>
+      </div>
+
+      <!-- Concept B: Rounded leaf in circle -->
+      <div class="logo-card">
+        <div class="logo-display">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="30" fill="#E1F5EE"/>
+            <path d="M32 48 Q32 22 50 18 Q52 36 32 48Z" fill="#1D9E75"/>
+            <path d="M32 48 Q32 26 16 20 Q14 38 32 48Z" fill="#5DCAA5"/>
+            <line x1="32" y1="48" x2="32" y2="38" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="logo-card-name">Leaf in circle</div>
+        <div class="logo-card-desc">Contained mark — great for app icons, favicons, and profile avatars. The circle adds friendliness.</div>
+      </div>
+
+      <!-- Concept C: Rounded square app icon style -->
+      <div class="logo-card">
+        <div class="logo-display">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <rect x="2" y="2" width="60" height="60" rx="16" fill="#1D9E75"/>
+            <line x1="32" y1="54" x2="32" y2="28" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M32 28 Q32 14 46 12 Q46 26 32 28Z" fill="#ffffff"/>
+            <path d="M32 36 Q32 24 20 22 Q20 34 32 36Z" fill="rgba(255,255,255,0.65)"/>
+          </svg>
+        </div>
+        <div class="logo-card-name">App icon mark</div>
+        <div class="logo-card-desc">Rounded square on brand green. Works perfectly as a mobile app icon and browser favicon.</div>
+      </div>
+
+      <!-- Concept D: Wordmark with leaf dot -->
+      <div class="logo-card">
+        <div class="logo-display">
+          <svg width="120" height="40" viewBox="0 0 120 40">
+            <text x="0" y="28" font-family="Georgia, serif" font-size="26" font-weight="700" fill="#1D9E75" letter-spacing="-0.5">sproutly</text>
+            <circle cx="114" cy="10" r="5" fill="#5DCAA5"/>
+            <path d="M114 10 Q114 4 120 3 Q120 9 114 10Z" fill="#1D9E75"/>
+          </svg>
+        </div>
+        <div class="logo-card-name">Wordmark + leaf</div>
+        <div class="logo-card-desc">Lowercase serif wordmark with a small leaf flourish. Warm, editorial, confident. Great for web headers.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- WORDMARK PREVIEWS -->
+  <div class="section">
+    <div class="section-label">Wordmark on backgrounds</div>
+    <div class="wordmark-preview">
+
+      <div class="wm-bg wm-light">
+        <svg width="40" height="40" viewBox="0 0 40 40">
+          <rect width="40" height="40" rx="10" fill="#1D9E75"/>
+          <line x1="20" y1="34" x2="20" y2="18" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 18 Q20 8 30 7 Q30 17 20 18Z" fill="#fff"/>
+          <path d="M20 24 Q20 16 12 14 Q12 22 20 24Z" fill="rgba(255,255,255,0.65)"/>
+        </svg>
+        <div>
+          <div style="font-size:22px;font-weight:500;color:#1D9E75;letter-spacing:-0.5px;font-family:Georgia,serif">Sproutly</div>
+          <div style="font-size:11px;color:#888;margin-top:1px">On white — primary usage</div>
+        </div>
+      </div>
+
+      <div class="wm-bg wm-dark">
+        <svg width="40" height="40" viewBox="0 0 40 40">
+          <rect width="40" height="40" rx="10" fill="#5DCAA5"/>
+          <line x1="20" y1="34" x2="20" y2="18" stroke="#1a2e1a" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 18 Q20 8 30 7 Q30 17 20 18Z" fill="#1a2e1a"/>
+          <path d="M20 24 Q20 16 12 14 Q12 22 20 24Z" fill="rgba(26,46,26,0.6)"/>
+        </svg>
+        <div>
+          <div style="font-size:22px;font-weight:500;color:#9FE1CB;letter-spacing:-0.5px;font-family:Georgia,serif">Sproutly</div>
+          <div style="font-size:11px;color:#5DCAA5;margin-top:1px">On dark — night mode</div>
+        </div>
+      </div>
+
+      <div class="wm-bg wm-green">
+        <svg width="40" height="40" viewBox="0 0 40 40">
+          <rect width="40" height="40" rx="10" fill="rgba(255,255,255,0.25)"/>
+          <line x1="20" y1="34" x2="20" y2="18" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 18 Q20 8 30 7 Q30 17 20 18Z" fill="#fff"/>
+          <path d="M20 24 Q20 16 12 14 Q12 22 20 24Z" fill="rgba(255,255,255,0.65)"/>
+        </svg>
+        <div>
+          <div style="font-size:22px;font-weight:500;color:#ffffff;letter-spacing:-0.5px;font-family:Georgia,serif">Sproutly</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:1px">On brand green — marketing use</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- COLOUR PALETTE -->
+  <div class="section">
+    <div class="section-label">Brand colour palette</div>
+    <div class="palette-row">
+      <div class="swatch-group">
+        <div class="swatch" style="background:#1D9E75"></div>
+        <div class="swatch-name">Sprout green</div>
+        <div class="swatch-hex">#1D9E75</div>
+        <div class="swatch-role">Primary — CTAs, logo</div>
+      </div>
+      <div class="swatch-group">
+        <div class="swatch" style="background:#5DCAA5"></div>
+        <div class="swatch-name">Leaf mid</div>
+        <div class="swatch-hex">#5DCAA5</div>
+        <div class="swatch-role">Secondary — accents</div>
+      </div>
+      <div class="swatch-group">
+        <div class="swatch" style="background:#E1F5EE"></div>
+        <div class="swatch-name">Morning mist</div>
+        <div class="swatch-hex">#E1F5EE</div>
+        <div class="swatch-role">Backgrounds, cards</div>
+      </div>
+      <div class="swatch-group">
+        <div class="swatch" style="background:#F9A23C"></div>
+        <div class="swatch-name">Terracotta sun</div>
+        <div class="swatch-hex">#F9A23C</div>
+        <div class="swatch-role">Warmth — tips, alerts</div>
+      </div>
+      <div class="swatch-group">
+        <div class="swatch" style="background:#FEF4E6"></div>
+        <div class="swatch-name">Parchment</div>
+        <div class="swatch-hex">#FEF4E6</div>
+        <div class="swatch-role">Warm neutral surface</div>
+      </div>
+      <div class="swatch-group">
+        <div class="swatch" style="background:#1A2E1A"></div>
+        <div class="swatch-name">Deep forest</div>
+        <div class="swatch-hex">#1A2E1A</div>
+        <div class="swatch-role">Dark mode bg, text</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TYPOGRAPHY -->
+  <div class="section">
+    <div class="section-label">Typography pairing</div>
+    <div class="font-row">
+      <div class="font-card">
+        <div class="font-sample" style="font-family:Georgia,serif;font-size:28px;font-weight:700;color:#1D9E75;line-height:1.1">Sproutly</div>
+        <div class="font-sample" style="font-family:Georgia,serif;font-size:16px;color:var(--color-text-primary);line-height:1.4">Aa Bb Cc — Headlines</div>
+        <div class="font-label">Georgia / Lora — wordmark & headings. Warm, trustworthy, slightly editorial.</div>
+      </div>
+      <div class="font-card">
+        <div class="font-sample" style="font-family:system-ui,sans-serif;font-size:15px;color:var(--color-text-primary);line-height:1.6">Your basil needs watering today. Tap to mark it done and keep your streak alive!</div>
+        <div class="font-label">Inter / DM Sans — body & UI. Clean, legible at small sizes, friendly feel.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOMAIN STRATEGY -->
+  <div class="section">
+    <div class="section-label">Domain strategy</div>
+    <div class="domain-list">
+      <div class="domain-row">
+        <div class="domain-name">sproutly.app</div>
+        <div class="domain-note">Best option — .app is Google-verified HTTPS, perfect for a consumer app</div>
+        <span class="badge badge-go">Pursue first</span>
+      </div>
+      <div class="domain-row">
+        <div class="domain-name">getsproutly.com</div>
+        <div class="domain-note">Classic "get" prefix — widely used when .com is taken. Very recognisable pattern.</div>
+        <span class="badge badge-go">Strong fallback</span>
+      </div>
+      <div class="domain-row">
+        <div class="domain-name">sproutly.io</div>
+        <div class="domain-note">.io has strong tech-product credibility. Works well for early launch / pre-product.</div>
+        <span class="badge badge-go">Good option</span>
+      </div>
+      <div class="domain-row">
+        <div class="domain-name">sproutly.com</div>
+        <div class="domain-note">Almost certainly registered. Check — if available, buy immediately. Worth a purchase inquiry if parked.</div>
+        <span class="badge badge-maybe">Check first</span>
+      </div>
+      <div class="domain-row">
+        <div class="domain-name">sproutly.co</div>
+        <div class="domain-note">Acceptable but .co is often confused with .com — causes support headaches and lost traffic.</div>
+        <span class="badge badge-maybe">Last resort</span>
+      </div>
+      <div class="domain-row">
+        <div class="domain-name">mysproutly.com</div>
+        <div class="domain-note">Feels dated — the "my" prefix was a 2010s pattern. Avoid if possible.</div>
+        <span class="badge badge-risk">Avoid</span>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,38 @@
+:root {
+  --sprout-green: #1d9e75;
+  --leaf-mid: #5dcaa5;
+  --morning-mist: #e1f5ee;
+  --terracotta-sun: #f9a23c;
+  --parchment: #fef4e6;
+  --deep-forest: #1a2e1a;
+
+  --font-heading: Georgia, Lora, serif;
+  --font-body: Inter, 'DM Sans', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--deep-forest);
+  background: var(--morning-mist);
+}
+
+.placeholder {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  padding: 16px;
+}
+
+.wordmark {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 3rem;
+  color: var(--sprout-green);
+  margin: 0 0 8px;
+}

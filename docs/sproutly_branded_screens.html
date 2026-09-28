@@ -1,0 +1,343 @@
+
+<style>
+  * { box-sizing: border-box; }
+  body, .wrap { font-family: system-ui, -apple-system, sans-serif; }
+  .wrap { padding: 16px 0; }
+
+  /* Screen nav */
+  .nav { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .nav-btn { font-size: 11px; font-weight: 500; padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-secondary); cursor: pointer; transition: all .15s; }
+  .nav-btn.active { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+
+  /* Device frame */
+  .device-wrap { display: flex; justify-content: center; }
+  .device { width: 320px; background: #fff; border-radius: 32px; border: 1px solid #d0d0d0; overflow: hidden; box-shadow: 0 2px 24px rgba(0,0,0,0.10); }
+  .device-bar { height: 10px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; }
+  .device-pill { width: 60px; height: 4px; background: #333; border-radius: 2px; }
+  .screen { min-height: 580px; display: flex; flex-direction: column; }
+
+  /* Screen hidden/shown */
+  .s { display: none; }
+  .s.visible { display: flex; flex-direction: column; }
+
+  /* ── Shared components ── */
+  .progress { display: flex; gap: 4px; padding: 0 20px; margin-bottom: 20px; }
+  .pd { height: 3px; border-radius: 2px; flex: 1; background: #E1F5EE; }
+  .pd.done { background: #1D9E75; }
+  .pd.active { background: #5DCAA5; }
+  .skip-link { text-align: center; font-size: 11px; color: #9FE1CB; margin-top: auto; padding-bottom: 20px; cursor: pointer; }
+
+  /* ── Screen 1: Sign up ── */
+  #s1 { background: #1A2E1A; }
+  .s1-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px 24px; }
+  .sprout-icon { width: 64px; height: 64px; background: #1D9E75; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+  .brand-name { font-family: Georgia, serif; font-size: 30px; font-weight: 700; color: #9FE1CB; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .brand-tagline { font-size: 13px; color: #5DCAA5; text-align: center; margin-bottom: 32px; }
+  .auth-card { background: #fff; border-radius: 20px; padding: 24px 20px; width: 100%; }
+  .auth-title { font-size: 16px; font-weight: 600; color: #1A2E1A; margin-bottom: 16px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; font-weight: 500; color: #666; margin-bottom: 4px; }
+  .field-inp { width: 100%; height: 36px; border: 0.5px solid #ddd; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #1A2E1A; background: #fafafa; display: flex; align-items: center; }
+  .cta-green { background: #1D9E75; color: #fff; border: none; border-radius: 10px; padding: 11px; width: 100%; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 4px; }
+  .divider-row { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
+  .div-line { flex: 1; height: 0.5px; background: #eee; }
+  .div-text { font-size: 11px; color: #aaa; }
+  .social-row { display: flex; gap: 8px; }
+  .social-btn { flex: 1; height: 36px; border: 0.5px solid #ddd; border-radius: 8px; background: #fff; font-size: 12px; color: #444; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; font-weight: 500; }
+
+  /* ── Screen 2: Welcome ── */
+  #s2 { background: #fff; }
+  .screen-header { padding: 20px 20px 0; }
+  .screen-body { padding: 0 20px; flex: 1; }
+  .screen-foot { padding: 16px 20px 24px; }
+  .logo-small { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
+  .logo-dot { width: 28px; height: 28px; background: #1D9E75; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-text { font-family: Georgia, serif; font-size: 17px; font-weight: 700; color: #1D9E75; }
+  .scr-title { font-size: 20px; font-weight: 700; color: #1A2E1A; margin-bottom: 6px; line-height: 1.2; }
+  .scr-sub { font-size: 13px; color: #666; margin-bottom: 24px; line-height: 1.5; }
+  .inp-group { margin-bottom: 14px; }
+  .inp-label { font-size: 11px; font-weight: 500; color: #555; margin-bottom: 5px; }
+  .inp-box { width: 100%; height: 42px; border: 0.5px solid #ddd; border-radius: 10px; padding: 0 12px; font-size: 14px; color: #1A2E1A; background: #fafafa; display: flex; align-items: center; }
+  .inp-box.focus { border-color: #1D9E75; background: #f0fbf6; }
+  .inp-hint { font-size: 10px; color: #aaa; margin-top: 4px; }
+
+  /* ── Screen 3: Space ── */
+  #s3 { background: #fff; }
+  .tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .tile { border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 14px 10px; text-align: center; cursor: pointer; transition: all .15s; }
+  .tile.sel { border-color: #1D9E75; background: #E1F5EE; }
+  .tile-icon { font-size: 22px; margin-bottom: 5px; }
+  .tile-name { font-size: 12px; font-weight: 600; color: #1A2E1A; }
+  .tile-hint { font-size: 10px; color: #888; margin-top: 2px; }
+  .tile.sel .tile-name { color: #0F6E56; }
+  .multi-link { text-align: center; font-size: 11px; color: #1D9E75; margin-bottom: 16px; cursor: pointer; }
+
+  /* ── Screen 4: Starter pack ── */
+  #s4 { background: #fff; }
+  .pack-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+  .pack { border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all .15s; }
+  .pack.sel { border-color: #1D9E75; background: #f0fbf6; }
+  .pack-em { font-size: 24px; flex-shrink: 0; }
+  .pack-name { font-size: 13px; font-weight: 600; color: #1A2E1A; }
+  .pack-desc { font-size: 11px; color: #888; }
+  .pack-check { margin-left: auto; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #ccc; flex-shrink: 0; transition: all .15s; }
+  .pack.sel .pack-check { background: #1D9E75; border-color: #1D9E75; }
+  .pack.sel .pack-name { color: #0F6E56; }
+
+  /* ── Screen 5: Meet plant ── */
+  #s5 { background: #fff; }
+  .plant-hero { background: #E1F5EE; border-radius: 14px; padding: 20px; margin-bottom: 16px; text-align: center; }
+  .plant-emoji { font-size: 48px; margin-bottom: 8px; }
+  .plant-name-big { font-size: 22px; font-weight: 700; color: #0F6E56; font-family: Georgia, serif; }
+  .plant-nick-prompt { font-size: 11px; color: #5DCAA5; margin-top: 3px; cursor: pointer; }
+  .care-chips { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-top: 10px; }
+  .chip { font-size: 10px; font-weight: 500; padding: 3px 9px; border-radius: 10px; }
+  .chip-w { background: #E6F1FB; color: #185FA5; }
+  .chip-s { background: #FAEEDA; color: #633806; }
+  .chip-e { background: #EAF3DE; color: #27500A; }
+  .care-note { font-size: 12px; color: #888; line-height: 1.6; margin-bottom: 16px; text-align: center; }
+
+  /* ── Screen 6: Notifications ── */
+  #s6 { background: #1A2E1A; }
+  .notif-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; }
+  .notif-icon-wrap { width: 80px; height: 80px; background: rgba(29,158,117,0.2); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+  .notif-title { font-size: 22px; font-weight: 700; color: #fff; text-align: center; margin-bottom: 10px; font-family: Georgia, serif; line-height: 1.25; }
+  .notif-sub { font-size: 13px; color: #5DCAA5; text-align: center; margin-bottom: 32px; line-height: 1.6; }
+  .notif-preview { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px; width: 100%; margin-bottom: 28px; display: flex; align-items: center; gap: 10px; }
+  .notif-app-dot { width: 28px; height: 28px; background: #1D9E75; border-radius: 7px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .notif-msg-title { font-size: 12px; font-weight: 600; color: #fff; }
+  .notif-msg-body { font-size: 11px; color: #9FE1CB; }
+  .cta-white { background: #fff; color: #0F6E56; border: none; border-radius: 12px; padding: 13px; width: 100%; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+  /* ── Screen 7: Dashboard ── */
+  #s7 { background: #f7fdf9; }
+  .dash-header { background: #1D9E75; padding: 20px 20px 16px; }
+  .dash-greeting { font-size: 18px; font-weight: 700; color: #fff; font-family: Georgia, serif; margin-bottom: 2px; }
+  .dash-sub { font-size: 12px; color: #9FE1CB; }
+  .confetti { background: #fff; border-radius: 10px; padding: 10px 14px; margin: 14px 14px 0; display: flex; align-items: center; gap: 8px; border: 1px solid #c8edd9; }
+  .confetti-text { font-size: 12px; font-weight: 600; color: #0F6E56; }
+  .dash-body { padding: 14px; flex: 1; }
+  .dash-section-title { font-size: 11px; font-weight: 600; color: #888; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 8px; }
+  .task-item { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; border: 0.5px solid #e8f5ed; }
+  .task-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .task-text { font-size: 13px; color: #1A2E1A; flex: 1; font-weight: 500; }
+  .task-time { font-size: 10px; color: #aaa; }
+  .tip-card { background: #FEF4E6; border-radius: 10px; padding: 12px 14px; margin-top: 10px; border: 0.5px solid #f9c97c; }
+  .tip-label { font-size: 10px; font-weight: 600; color: #854F0B; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .tip-text { font-size: 12px; color: #633806; line-height: 1.55; }
+
+  /* CTA shared */
+  .cta-main { background: #1D9E75; color: #fff; border: none; border-radius: 10px; padding: 12px; width: 100%; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .cta-ghost { background: none; border: none; color: #1D9E75; font-size: 11px; width: 100%; padding: 8px 0 0; cursor: pointer; }
+</style>
+
+<div class="wrap">
+  <div class="nav" id="nav">
+    <button class="nav-btn active" onclick="show(0)">Sign up</button>
+    <button class="nav-btn" onclick="show(1)">Welcome</button>
+    <button class="nav-btn" onclick="show(2)">Your space</button>
+    <button class="nav-btn" onclick="show(3)">Starter pack</button>
+    <button class="nav-btn" onclick="show(4)">Meet your plant</button>
+    <button class="nav-btn" onclick="show(5)">Reminders</button>
+    <button class="nav-btn" onclick="show(6)">Dashboard</button>
+  </div>
+
+  <div class="device-wrap">
+    <div class="device">
+      <div class="device-bar"><div class="device-pill"></div></div>
+
+      <!-- S1: Sign up -->
+      <div class="screen s visible" id="s1">
+        <div class="s1-top">
+          <div class="sprout-icon">
+            <svg width="36" height="44" viewBox="0 0 36 44">
+              <line x1="18" y1="42" x2="18" y2="20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M18 20 Q18 6 30 4 Q30 18 18 20Z" fill="#fff"/>
+              <path d="M18 29 Q18 17 7 15 Q7 27 18 29Z" fill="rgba(255,255,255,0.65)"/>
+            </svg>
+          </div>
+          <div class="brand-name">Sproutly</div>
+          <div class="brand-tagline">Grow with confidence, one plant at a time</div>
+          <div class="auth-card">
+            <div class="auth-title">Create your account</div>
+            <div class="field"><div class="inp-label">Your name</div><div class="field-inp">Sam</div></div>
+            <div class="field"><div class="inp-label">Email</div><div class="field-inp">sam@email.com</div></div>
+            <div class="field"><div class="inp-label">Password</div><div class="field-inp" style="color:#aaa">••••••••</div></div>
+            <button class="cta-green">Create account</button>
+            <div class="divider-row"><div class="div-line"></div><div class="div-text">or</div><div class="div-line"></div></div>
+            <div class="social-row">
+              <div class="social-btn">G &nbsp;Google</div>
+              <div class="social-btn"> Apple</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- S2: Welcome -->
+      <div class="screen s" id="s2">
+        <div class="screen-header">
+          <div class="logo-small">
+            <div class="logo-dot">
+              <svg width="16" height="20" viewBox="0 0 16 20"><line x1="8" y1="19" x2="8" y2="9" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M8 9 Q8 2 14 1 Q14 8 8 9Z" fill="#fff"/><path d="M8 13 Q8 7 3 6 Q3 12 8 13Z" fill="rgba(255,255,255,0.6)"/></svg>
+            </div>
+            <div class="logo-text">Sproutly</div>
+          </div>
+          <div class="progress"><div class="pd done"></div><div class="pd active"></div><div class="pd"></div><div class="pd"></div><div class="pd"></div></div>
+        </div>
+        <div class="screen-body">
+          <div class="scr-title">Nice to meet you, Sam!</div>
+          <div class="scr-sub">Where are you growing from? We'll use this to tailor your care advice.</div>
+          <div class="inp-group"><div class="inp-label">Your name</div><div class="inp-box focus">Sam</div></div>
+          <div class="inp-group"><div class="inp-label">City or postcode</div><div class="inp-box">Bengaluru, India</div><div class="inp-hint">Used only to personalise your care advice — never shared.</div></div>
+        </div>
+        <div class="screen-foot">
+          <button class="cta-main">Continue</button>
+          <div class="skip-link" style="color:#aaa;margin-top:8px">Skip to dashboard</div>
+        </div>
+      </div>
+
+      <!-- S3: Space -->
+      <div class="screen s" id="s3">
+        <div class="screen-header">
+          <div class="logo-small">
+            <div class="logo-dot"><svg width="16" height="20" viewBox="0 0 16 20"><line x1="8" y1="19" x2="8" y2="9" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M8 9 Q8 2 14 1 Q14 8 8 9Z" fill="#fff"/><path d="M8 13 Q8 7 3 6 Q3 12 8 13Z" fill="rgba(255,255,255,0.6)"/></svg></div>
+            <div class="logo-text">Sproutly</div>
+          </div>
+          <div class="progress"><div class="pd done"></div><div class="pd done"></div><div class="pd active"></div><div class="pd"></div><div class="pd"></div></div>
+        </div>
+        <div class="screen-body">
+          <div class="scr-title">Where do you grow?</div>
+          <div class="scr-sub">This helps us recommend plants that'll actually thrive in your space.</div>
+          <div class="tile-grid">
+            <div class="tile sel"><div class="tile-icon">🪴</div><div class="tile-name">Balcony</div><div class="tile-hint">Pots & containers</div></div>
+            <div class="tile"><div class="tile-icon">🏠</div><div class="tile-name">Indoors</div><div class="tile-hint">Windowsill & rooms</div></div>
+            <div class="tile"><div class="tile-icon">🌿</div><div class="tile-name">Garden bed</div><div class="tile-hint">Outdoor ground</div></div>
+            <div class="tile"><div class="tile-icon">🌱</div><div class="tile-name">Not sure yet</div><div class="tile-hint">We'll figure it out</div></div>
+          </div>
+          <div class="multi-link">Pick multiple spaces</div>
+        </div>
+        <div class="screen-foot">
+          <button class="cta-main">Continue</button>
+          <div class="skip-link" style="color:#aaa;margin-top:8px">Skip to dashboard</div>
+        </div>
+      </div>
+
+      <!-- S4: Starter pack -->
+      <div class="screen s" id="s4">
+        <div class="screen-header">
+          <div class="logo-small">
+            <div class="logo-dot"><svg width="16" height="20" viewBox="0 0 16 20"><line x1="8" y1="19" x2="8" y2="9" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M8 9 Q8 2 14 1 Q14 8 8 9Z" fill="#fff"/><path d="M8 13 Q8 7 3 6 Q3 12 8 13Z" fill="rgba(255,255,255,0.6)"/></svg></div>
+            <div class="logo-text">Sproutly</div>
+          </div>
+          <div class="progress"><div class="pd done"></div><div class="pd done"></div><div class="pd done"></div><div class="pd active"></div><div class="pd"></div></div>
+        </div>
+        <div class="screen-body">
+          <div class="scr-title">Start with a bundle?</div>
+          <div class="scr-sub">Pre-picked plants that are perfect for balcony beginners — all easy to keep alive.</div>
+          <div class="pack-list">
+            <div class="pack sel"><div class="pack-em">🌿</div><div><div class="pack-name">Easy balcony herbs</div><div class="pack-desc">Basil, mint, chives — hard to kill</div></div><div class="pack-check"></div></div>
+            <div class="pack"><div class="pack-em">🪴</div><div><div class="pack-name">Beginner houseplants</div><div class="pack-desc">Pothos, snake plant, peace lily</div></div><div class="pack-check"></div></div>
+            <div class="pack"><div class="pack-em">🌸</div><div><div class="pack-name">Balcony flowers</div><div class="pack-desc">Petunias, marigolds, lavender</div></div><div class="pack-check"></div></div>
+          </div>
+        </div>
+        <div class="screen-foot">
+          <button class="cta-main">Add these to my garden</button>
+          <button class="cta-ghost">I'll add plants myself</button>
+        </div>
+      </div>
+
+      <!-- S5: Meet plant -->
+      <div class="screen s" id="s5">
+        <div class="screen-header">
+          <div class="logo-small">
+            <div class="logo-dot"><svg width="16" height="20" viewBox="0 0 16 20"><line x1="8" y1="19" x2="8" y2="9" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M8 9 Q8 2 14 1 Q14 8 8 9Z" fill="#fff"/><path d="M8 13 Q8 7 3 6 Q3 12 8 13Z" fill="rgba(255,255,255,0.6)"/></svg></div>
+            <div class="logo-text">Sproutly</div>
+          </div>
+          <div class="progress"><div class="pd done"></div><div class="pd done"></div><div class="pd done"></div><div class="pd done"></div><div class="pd active"></div></div>
+        </div>
+        <div class="screen-body">
+          <div class="scr-title">Say hi to your basil!</div>
+          <div class="plant-hero">
+            <div class="plant-emoji">🌿</div>
+            <div class="plant-name-big">Basil</div>
+            <div class="plant-nick-prompt">Tap to give it a nickname</div>
+            <div class="care-chips">
+              <span class="chip chip-w">Water every 2 days</span>
+              <span class="chip chip-s">Bright indirect light</span>
+              <span class="chip chip-e">Beginner friendly</span>
+            </div>
+          </div>
+          <div class="care-note">We've set up a care schedule for you. You can tweak it any time from the plant's page.</div>
+        </div>
+        <div class="screen-foot">
+          <button class="cta-main">Looks good — set my reminders</button>
+        </div>
+      </div>
+
+      <!-- S6: Notifications -->
+      <div class="screen s" id="s6">
+        <div class="notif-body">
+          <div class="notif-icon-wrap">
+            <svg width="40" height="48" viewBox="0 0 40 48">
+              <line x1="20" y1="46" x2="20" y2="22" stroke="#1D9E75" stroke-width="3" stroke-linecap="round"/>
+              <path d="M20 22 Q20 6 34 4 Q34 20 20 22Z" fill="#1D9E75"/>
+              <path d="M20 32 Q20 18 8 15 Q8 28 20 32Z" fill="#5DCAA5"/>
+            </svg>
+          </div>
+          <div class="notif-title">Never forget to water again</div>
+          <div class="notif-sub">We'll remind you exactly when each plant needs care — nothing more, nothing less.</div>
+          <div class="notif-preview">
+            <div class="notif-app-dot">
+              <svg width="14" height="17" viewBox="0 0 14 17"><line x1="7" y1="16" x2="7" y2="8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M7 8 Q7 2 12 1 Q12 7 7 8Z" fill="#fff"/><path d="M7 11 Q7 6 3 5 Q3 10 7 11Z" fill="rgba(255,255,255,0.6)"/></svg>
+            </div>
+            <div>
+              <div class="notif-msg-title">Sproutly — Time to water your basil</div>
+              <div class="notif-msg-body">Your basil is thirsty! Takes just 30 seconds.</div>
+            </div>
+          </div>
+          <button class="cta-white">Turn on reminders</button>
+          <div class="skip-link" style="margin-top:12px;padding-bottom:0">Maybe later</div>
+        </div>
+      </div>
+
+      <!-- S7: Dashboard -->
+      <div class="screen s" id="s7">
+        <div class="dash-header">
+          <div class="dash-greeting">Good morning, Sam</div>
+          <div class="dash-sub">3 plants are counting on you today</div>
+        </div>
+        <div class="confetti">
+          <div style="font-size:16px">🎉</div>
+          <div class="confetti-text">Your garden is ready! 3 plants added</div>
+        </div>
+        <div class="dash-body">
+          <div class="dash-section-title">Today's tasks</div>
+          <div class="task-item"><div class="task-dot" style="background:#378ADD"></div><div class="task-text">Water your basil</div><div class="task-time">Morning</div></div>
+          <div class="task-item"><div class="task-dot" style="background:#378ADD"></div><div class="task-text">Water your mint</div><div class="task-time">Morning</div></div>
+          <div class="task-item"><div class="task-dot" style="background:#1D9E75"></div><div class="task-text">Check chives for new growth</div><div class="task-time">Any time</div></div>
+          <div class="tip-card">
+            <div class="tip-label">Quick tip</div>
+            <div class="tip-text">Basil loves warmth. Keep it away from cold windowsills at night — even a few degrees makes a difference.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const screens = ['s1','s2','s3','s4','s5','s6','s7'];
+const btns = document.querySelectorAll('.nav-btn');
+function show(i) {
+  screens.forEach((id, j) => {
+    const el = document.getElementById(id);
+    el.classList.toggle('visible', j === i);
+    el.classList.toggle('s', true);
+    if (j === i) el.style.display = 'flex';
+    else el.style.display = 'none';
+  });
+  btns.forEach((b, j) => b.classList.toggle('active', j === i));
+}
+show(0);
+</script>

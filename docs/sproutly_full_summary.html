@@ -1,0 +1,329 @@
+
+<style>
+  .wrap { padding: 12px 0; font-size: 14px; }
+  .section { margin-bottom: 28px; }
+  .sec-label { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cards.three { grid-template-columns: 1fr 1fr 1fr; }
+  .card { border: 0.5px solid var(--border); border-radius: 12px; padding: 14px 16px; background: var(--surface-2); }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 6px; }
+  .card-body { font-size: 12px; color: var(--text-secondary); line-height: 1.65; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 8px; margin-bottom: 7px; }
+  .t-teal   { background: #E1F5EE; color: #085041; }
+  .t-green  { background: #EAF3DE; color: #27500A; }
+  .t-amber  { background: #FAEEDA; color: #633806; }
+  .t-purple { background: #EEEDFE; color: #3C3489; }
+  .t-red    { background: #FCEBEB; color: #791F1F; }
+  .t-gray   { background: var(--bg-neutral); color: var(--text-secondary); }
+  .t-blue   { background: #E6F1FB; color: #0C447C; }
+  .row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .dot-teal   { background: #1D9E75; }
+  .dot-purple { background: #3C3489; }
+  .dot-amber  { background: #854F0B; }
+  .dot-red    { background: #A32D2D; }
+  .dot-gray   { background: var(--text-muted); }
+  .row-text { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+  .row-text b { color: var(--text-primary); font-weight: 500; }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 24px 0; }
+  .metric-row { display: flex; gap: 10px; }
+  .metric { flex: 1; background: var(--surface-1); border-radius: 10px; padding: 12px 14px; }
+  .metric-val { font-size: 22px; font-weight: 500; color: var(--text-primary); }
+  .metric-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .open-q { border: 0.5px solid var(--border-accent); background: var(--bg-accent); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .open-q-num { font-size: 11px; font-weight: 500; color: var(--text-accent); margin-bottom: 3px; }
+  .open-q-text { font-size: 12px; color: var(--text-primary); line-height: 1.6; }
+  .open-q-area { font-size: 10px; color: var(--text-accent); margin-top: 4px; }
+  .doc-row { display: flex; gap: 10px; }
+  .doc { flex: 1; border: 0.5px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface-2); }
+  .doc-icon { font-size: 20px; margin-bottom: 6px; }
+  .doc-name { font-size: 12px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+  .doc-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+</style>
+
+<div class="wrap">
+
+  <!-- PRODUCT -->
+  <div class="section">
+    <div class="sec-label">Product definition</div>
+    <div class="cards">
+      <div class="card">
+        <div class="tag t-teal">Core purpose</div>
+        <div class="card-body">A beginner hobbyist garden companion app for people growing plants on balconies or indoors. Builds confidence and makes gardening feel fun — not a power tool, more like Duolingo for plants.</div>
+      </div>
+      <div class="card">
+        <div class="tag t-teal">Primary user</div>
+        <div class="card-body"><b>Sam, 28</b> — first-time plant parent. Has a sunny balcony. Excited but nervous about killing plants. Doesn't know botanical terminology and doesn't want to read a manual.</div>
+      </div>
+      <div class="card">
+        <div class="tag t-green">Platform</div>
+        <div class="card-body">Web-first, hybrid. Desktop and tablet browser as primary. Mobile web fully responsive from day one. Native iOS/Android apps out of scope for v1.</div>
+      </div>
+      <div class="card">
+        <div class="tag t-green">North star feeling</div>
+        <div class="card-body">"This is fun and I want to learn more." Every feature must reduce fear, build curiosity, or celebrate a small win.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- FEATURES -->
+  <div class="section">
+    <div class="sec-label">Feature roadmap — decided</div>
+    <div class="cards">
+      <div class="card">
+        <div class="tag t-teal">Phase 1 — MVP</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Guided 8-step onboarding wizard</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Starter pack bundles (herbs, houseplants, flowers)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Daily task dashboard ("what do I do today?")</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Plant care cards in plain English</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Smart watering reminders (web push)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Plant growth photo diary + auto time-lapse</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Health check-in (emoji-based weekly prompt)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Pot & container tracker with repotting reminders</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tag t-green">Phase 2 — Post PMF</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Bite-sized in-context plant lessons</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Photo-based AI pest/disease diagnosis</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Seasonal "what to do now" tips</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Plain-English garden glossary (tap any jargon)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Care streaks + beginner achievement badges</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Shareable plant cards for social media</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Plant recommendations engine (by space + conditions)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Community Q&A (moderated)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:-4px">
+    <div class="cards three">
+      <div class="card">
+        <div class="tag t-red">Deliberately cut for v1</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-red"></div><div class="row-text">Garden layout / spatial map</div></div>
+          <div class="row"><div class="dot dot-red"></div><div class="row-text">Seed inventory tracker</div></div>
+          <div class="row"><div class="dot dot-red"></div><div class="row-text">Harvest weight logging</div></div>
+          <div class="row"><div class="dot dot-red"></div><div class="row-text">Companion planting matrix</div></div>
+          <div class="row"><div class="dot dot-red"></div><div class="row-text">Soil sensor integrations</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tag t-purple">Phase 3 — Delight</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-purple"></div><div class="row-text">Plant birthday & milestone alerts</div></div>
+          <div class="row"><div class="dot dot-purple"></div><div class="row-text">Year-in-review recap</div></div>
+          <div class="row"><div class="dot dot-purple"></div><div class="row-text">Neighbourhood seed swap</div></div>
+          <div class="row"><div class="dot dot-purple"></div><div class="row-text">Harvest-to-table recipes</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tag t-amber">Phase 4 — Premium</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-amber"></div><div class="row-text">AI garden assistant (chat-based)</div></div>
+          <div class="row"><div class="dot dot-amber"></div><div class="row-text">In-app seed & supply shop</div></div>
+          <div class="row"><div class="dot dot-amber"></div><div class="row-text">Multi-garden management</div></div>
+          <div class="row"><div class="dot dot-amber"></div><div class="row-text">Upgrade path to outdoor beds</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ONBOARDING -->
+  <div class="section">
+    <div class="sec-label">Onboarding flow — decided</div>
+    <div class="cards">
+      <div class="card">
+        <div class="tag t-teal">8 steps (< 3 min target)</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Step 1</b> — Sign up (email or Google/Apple OAuth)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Step 2</b> — Welcome: name + location (for climate advice)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Step 3</b> — Choose space: balcony, indoors, garden bed, not sure</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Step 4</b> — Experience level (beginner pre-selected)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Step 5</b> — Starter pack selection (3 curated bundles)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Step 6</b> — Meet your first plant (care card + nickname)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Step 7</b> — Enable reminders (web push, asked last)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Step 8</b> — Aha moment dashboard (tasks + tip card)</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tag t-green">Key UX decisions</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">One question per screen — never more</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">"Skip to dashboard" always visible from step 2+</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Notification permission asked last (after emotional investment)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Starter pack pre-selected by space type — user just confirms</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">No tutorial overlays — dashboard speaks for itself</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Flow is resumable — saved to localStorage + server</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Plain English only — no botanical jargon on any screen</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Beginner mode flag unlocks simplified content app-wide</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:-4px">
+    <div class="sec-label">Success metrics</div>
+    <div class="metric-row">
+      <div class="metric"><div class="metric-val">&gt; 70%</div><div class="metric-label">Onboarding completion rate</div></div>
+      <div class="metric"><div class="metric-val">&lt; 3 min</div><div class="metric-label">Time to first reminder</div></div>
+      <div class="metric"><div class="metric-val">&gt; 40%</div><div class="metric-label">Day-1 task completion</div></div>
+      <div class="metric"><div class="metric-val">&gt; 50%</div><div class="metric-label">Day-3 retention</div></div>
+      <div class="metric"><div class="metric-val">&gt; 60%</div><div class="metric-label">Starter pack selection rate</div></div>
+      <div class="metric"><div class="metric-val">&gt; 55%</div><div class="metric-label">Notification opt-in rate</div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- BRAND -->
+  <div class="section">
+    <div class="sec-label">Brand & identity — decided</div>
+    <div class="cards three">
+      <div class="card">
+        <div class="tag t-teal">Name & domain</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Name:</b> Sproutly</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Primary domain:</b> sproutly.app</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Fallback:</b> getsproutly.com</div></div>
+          <div class="row"><div class="dot dot-amber"></div><div class="row-text">Check .com — likely parked, worth an inquiry</div></div>
+          <div class="row"><div class="dot dot-amber"></div><div class="row-text">Run USPTO/EUIPO trademark check before committing</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tag t-green">Colour palette</div>
+        <div class="card-body">
+          <div class="row"><div class="dot" style="background:#1D9E75"></div><div class="row-text"><b>Sprout green</b> #1D9E75 — primary, CTAs, logo</div></div>
+          <div class="row"><div class="dot" style="background:#5DCAA5"></div><div class="row-text"><b>Leaf mid</b> #5DCAA5 — accents</div></div>
+          <div class="row"><div class="dot" style="background:#E1F5EE"></div><div class="row-text"><b>Morning mist</b> #E1F5EE — card backgrounds</div></div>
+          <div class="row"><div class="dot" style="background:#F9A23C"></div><div class="row-text"><b>Terracotta sun</b> #F9A23C — tips, streaks, warmth</div></div>
+          <div class="row"><div class="dot" style="background:#1A2E1A"></div><div class="row-text"><b>Deep forest</b> #1A2E1A — dark mode, sign-up bg</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tag t-purple">Typography & logo</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-purple"></div><div class="row-text"><b>Headings:</b> Georgia / Lora (warm serif)</div></div>
+          <div class="row"><div class="dot dot-purple"></div><div class="row-text"><b>UI body:</b> Inter / DM Sans</div></div>
+          <div class="row"><div class="dot dot-purple"></div><div class="row-text"><b>Preferred logo:</b> single sprout mark (two-leaf seedling)</div></div>
+          <div class="row"><div class="dot dot-purple"></div><div class="row-text"><b>App icon:</b> sprout on rounded-square teal bg</div></div>
+          <div class="row"><div class="dot dot-purple"></div><div class="row-text">Wordmark in lowercase Georgia serif</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- TECH -->
+  <div class="section">
+    <div class="sec-label">Technical decisions — decided</div>
+    <div class="cards">
+      <div class="card">
+        <div class="tag t-blue">Stack</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Frontend:</b> React + Zustand (state), localStorage persist</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>API:</b> Node.js / Express + Passport.js (auth)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Database:</b> PostgreSQL (primary), Redis (sessions, cache, analytics queue)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Auth:</b> JWT + refresh tokens + OAuth 2.0 (Google, Apple)</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>Push:</b> Web Push API + VAPID keys</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text"><b>CDN:</b> Cloudflare for static assets + API edge caching</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tag t-blue">Key constraints</div>
+        <div class="card-body">
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Each screen loads in &lt; 1s — no blocking API calls on transition</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">Onboarding JS bundle &lt; 120 KB gzipped</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">All API endpoints &lt; 300ms at p95</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">WCAG 2.1 AA on all onboarding screens</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">POST /gardens must be a single DB transaction</div></div>
+          <div class="row"><div class="dot dot-teal"></div><div class="row-text">75 atomic tasks, ~83 dev-days solo / ~6 weeks 2-person team</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- OPEN QUESTIONS -->
+  <div class="section">
+    <div class="sec-label">Open questions — unresolved</div>
+
+    <div class="open-q">
+      <div class="open-q-num">OQ-01</div>
+      <div class="open-q-text">What is the monetisation model? Freemium (free up to 5 plants, paid for unlimited + AI diagnosis) is the leading hypothesis but not decided.</div>
+      <div class="open-q-area">Business</div>
+    </div>
+    <div class="open-q">
+      <div class="open-q-num">OQ-02</div>
+      <div class="open-q-text">Which geocoding provider? Google Maps Platform (accurate, ~$5/1k requests) vs Nominatim/OpenStreetMap (free, slower, weaker for India and non-Western cities).</div>
+      <div class="open-q-area">Engineering</div>
+    </div>
+    <div class="open-q">
+      <div class="open-q-num">OQ-03</div>
+      <div class="open-q-text">Anonymous / guest onboarding before account creation? Reduces signup friction but adds ~1 day of engineering complexity for session migration.</div>
+      <div class="open-q-area">Product / Engineering</div>
+    </div>
+    <div class="open-q">
+      <div class="open-q-num">OQ-04</div>
+      <div class="open-q-text">Defer email verification or not? Deferring reduces onboarding friction but risks inflating analytics with junk accounts. Recommendation: defer, add soft nudge on day 3.</div>
+      <div class="open-q-area">Product / Engineering</div>
+    </div>
+    <div class="open-q">
+      <div class="open-q-num">OQ-05</div>
+      <div class="open-q-text">OAuth flow for web: popup vs redirect? Popup is smoother but blocked by some mobile browsers. Redirect with PKCE + Redis state restoration is more reliable.</div>
+      <div class="open-q-area">Engineering</div>
+    </div>
+    <div class="open-q">
+      <div class="open-q-num">OQ-06</div>
+      <div class="open-q-text">Push notification scheduling: in-process cron (simple, works to ~10k users) vs BullMQ queue (small overhead, avoids a painful rewrite at scale). Recommendation: BullMQ from day 1.</div>
+      <div class="open-q-area">Engineering</div>
+    </div>
+    <div class="open-q">
+      <div class="open-q-num">OQ-07</div>
+      <div class="open-q-text">Should the experience level screen (step 4) be skipped entirely, given beginners are always pre-selected? Or does actively choosing it create useful engagement?</div>
+      <div class="open-q-area">Product / UX</div>
+    </div>
+    <div class="open-q">
+      <div class="open-q-num">OQ-08</div>
+      <div class="open-q-text">Safari fallback for Web Push: Safari &lt; 16.4 does not support the Push API. Affected users get in-app bell only. Is this acceptable at launch, or does it need a different notification strategy?</div>
+      <div class="open-q-area">Engineering</div>
+    </div>
+    <div class="open-q">
+      <div class="open-q-num">OQ-09</div>
+      <div class="open-q-text">Domain acquisition: sproutly.app should be purchased as the primary action. sproutly.com should be checked — if parked, a direct inquiry to the registrant may be worth pursuing.</div>
+      <div class="open-q-area">Business</div>
+    </div>
+    <div class="open-q">
+      <div class="open-q-num">OQ-10</div>
+      <div class="open-q-text">Re-engagement strategy for users who complete onboarding but do not return after day 1. Email sequence? In-app? Push nudge? Not yet designed.</div>
+      <div class="open-q-area">Product / Growth</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- DELIVERABLES -->
+  <div class="section">
+    <div class="sec-label">Deliverables produced</div>
+    <div class="doc-row">
+      <div class="doc">
+        <div class="doc-name">GardenBuddy_Onboarding_PRD.docx</div>
+        <div class="doc-desc">Full PRD: 11 sections covering goals, metrics, user context, 8-screen flow specs, UX principles, copy guidelines, tech requirements, analytics events, and open questions.</div>
+      </div>
+      <div class="doc">
+        <div class="doc-name">Sproutly_Onboarding_TechSpec.docx</div>
+        <div class="doc-desc">Engineering spec: data models (SQL), 9 API contracts, Zustand store shape, component tree, routing, and 75 atomic tasks with estimates. ~83 dev-days / ~6-week 2-person critical path.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
