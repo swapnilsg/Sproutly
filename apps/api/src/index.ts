@@ -1,7 +1,27 @@
 import { createApp } from './app.js';
+import { closeDeps, createDeps } from './deps.js';
+import { loadEnv } from './env.js';
 
-const port = Number(process.env.PORT ?? 4000);
+try {
+  process.loadEnvFile();
+} catch {
+  // no .env file — rely on the real environment
+}
 
-createApp().listen(port, () => {
-  console.log(`Sproutly API listening on http://localhost:${port}`);
+const env = loadEnv();
+const deps = createDeps(env);
+
+if (!deps.verifyGoogle) console.warn('GOOGLE_CLIENT_ID not set — Google sign-in is disabled');
+if (!env.EMAIL_API_KEY) console.warn('EMAIL_API_KEY not set — sign-in codes are printed here');
+
+const server = createApp(deps).listen(env.PORT, () => {
+  console.log(`Sproutly API listening on http://localhost:${env.PORT}`);
 });
+
+async function shutdown() {
+  server.close();
+  await closeDeps(deps);
+  process.exit(0);
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
