@@ -1,3 +1,4 @@
+import { startAnalyticsFlusher } from './analytics/analytics.js';
 import { createApp } from './app.js';
 import { closeDeps, createDeps } from './deps.js';
 import { loadEnv } from './env.js';
@@ -18,7 +19,10 @@ const server = createApp(deps).listen(env.PORT, () => {
   console.log(`Sproutly API listening on http://localhost:${env.PORT}`);
 });
 
+const stopFlusher = startAnalyticsFlusher(deps);
+
 async function shutdown() {
+  stopFlusher();
   server.close();
   await closeDeps(deps);
   process.exit(0);

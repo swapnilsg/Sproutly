@@ -1,6 +1,7 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
+import { analyticsRoutes } from './analytics/analytics.js';
 import { authRoutes } from './auth/routes.js';
 import type { Deps } from './deps.js';
 import { errorHandler, HttpError } from './errors.js';
@@ -21,6 +22,7 @@ export function createApp(deps: Deps) {
   });
   api.use('/auth', authRoutes(deps));
   api.use('/users', userRoutes(deps));
+  api.use('/analytics', analyticsRoutes(deps));
   app.use('/api/v1', api);
 
   app.use(() => {
