@@ -68,7 +68,7 @@ There are 8 screens, and sign-up to first reminder should take under 3 minutes. 
 
 | # | Screen | Progress bar | Notes |
 |---|---|---|---|
-| 1 | Sign up | none | Email + password (min 8) or Google/Apple. Only name, email and password are asked. |
+| 1 | Sign up | none | "Continue with Google" (+ One Tap) or "Continue with email" → 6-digit code. No passwords, no name field (step 2 asks). Same screen doubles as "Welcome back". |
 | 2 | Welcome: name + location | segment 1 | Location is used for hardiness zone and frost dates. Geocoding is async and never blocks. |
 | 3 | Choose your space | segment 2 | 2×2 tiles: Balcony, Indoors, Garden bed, Not sure yet. Multi-select via "Pick multiple spaces". |
 | 4 | Experience level | segment 3 | "Total beginner" is pre-selected. Auto-advances after 2.5s with a visible countdown; any key, click or touch cancels it. |
@@ -158,16 +158,25 @@ There are 8 screens, and sign-up to first reminder should take under 3 minutes. 
 - **FE:** React + Zustand.
   - Persist key `sproutly_onboarding_v1`. On load: rehydrate from localStorage, then reconcile with the server. The server wins on step number; local wins on unsaved form data.
   - Routes: `/onboarding/:step` (1–8) and `/dashboard`. Step components are lazy-loaded.
-- **API:** Node/Express + Passport. REST under `/api/v1`, JSON only. zod validation returns 422 with field errors. Global error handler with no stack traces in production.
+- **API:** Node/Express (no Passport). REST under `/api/v1`, JSON only. zod validation returns 422 with field errors. Global error handler with no stack traces in production.
 - **Data:** PostgreSQL. Redis holds sessions, rate limits, the onboarding cache (`onboarding:{userId}`, 30-day TTL) and the analytics queue (flushed every 10s).
-- **Auth:**
-  - JWT access token lasts 15 min and is kept **in memory only**, never in localStorage.
-  - Refresh token lasts 30 days, is rotated on use, and lives in an httpOnly cookie.
-  - Passwords use bcrypt cost 12. Auth routes are rate-limited to 10 per hour per IP.
-  - Email verification is deferred (OQ-04).
+- **Auth (passwordless):**
+  - **Methods:** Google (GIS button + One Tap, server verifies the ID token) and a 6-digit email code. No passwords and no Apple (OQ-12).
+  - **Email code:**
+    - Stored as an HMAC in Redis `otp:{email}` with a 10-minute TTL.
+    - Max 5 attempts, then the code is burned.
+    - `start` always returns 202, so it never reveals whether an account exists.
+    - Rate limits: 3 per email per 15 min, 10 per IP per hour.
+  - **Accounts:** every account has a verified email. Google sign-ins link to an existing user by email; `auth_identities` stores `(provider, provider_subject)`.
+  - **Access token:** a JWT that lasts 15 min and is kept **in memory only**, never in localStorage.
+  - **Refresh token:** lasts 30 days and lives in an httpOnly cookie. It is rotated on every use; reusing a revoked token revokes the whole token family.
+  - **Google switched off:** when `GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_ID` are unset, the API returns 503 and the web app hides the Google button.
+  - **Email sending:** codes print to the API console until `EMAIL_API_KEY` is set; then Resend is used.
 - **Push:** Web Push + VAPID. **CDN:** Cloudflare. **CORS:** `sproutly.app` and `localhost:3000`, with credentials.
-- **Tests:** Playwright E2E (happy, skip, OAuth, resume and notification-denied paths) on every PR. Jest + Supertest for the API, 90% coverage on auth and onboarding routes.
-- **Env vars:** `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `REFRESH_SECRET`, `GOOGLE_CLIENT_ID`, `APPLE_CLIENT_ID`, `VAPID_PRIVATE_KEY`, `GEOCODING_API_KEY`.
+- **Tests:**
+  - Playwright E2E on every PR, covering the happy, skip, OAuth, resume and notification-denied paths.
+  - Vitest + Supertest for the API against real Postgres/Redis, with 90% coverage on auth and onboarding routes.
+- **Env vars:** `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `OTP_SECRET`, `GOOGLE_CLIENT_ID`, `EMAIL_API_KEY`, `EMAIL_FROM`, `VAPID_PRIVATE_KEY`, `GEOCODING_API_KEY`.
 
 ### Constraints
 - Each screen renders in < 1s, with no blocking API call on step transitions.
@@ -178,18 +187,23 @@ There are 8 screens, and sign-up to first reminder should take under 3 minutes. 
 - `users.onboarding_step` holds the last completed step (0–7). It only increments; lower values are ignored.
 
 ### Data model
-- **Specified:** `users`, `gardens`, `garden_plants` (with `care_schedule` JSONB), `onboarding_events`.
-- **Still to specify:** `plants`, `packs` (+ pack→plant join), `tasks`, `push_subscriptions`, `tips`, `refresh_tokens`.
+- **Built:** `users` (no `password_hash`), `auth_identities`, `refresh_tokens`, `onboarding_events` (migrations in `apps/api/migrations/`).
+- **Specified, not built:** `gardens`, `garden_plants` (with `care_schedule` JSONB).
+- **Still to specify:** `plants`, `packs` (+ pack→plant join), `tasks`, `push_subscriptions`, `tips`.
 
 ### API
-- **Specified:**
-  - `POST /auth/signup`, `POST /auth/oauth`
-  - `PATCH /users/me/profile`, `GET /users/me/onboarding-state`
+- **Built (auth):**
+  - `POST /auth/email/start`, `POST /auth/email/verify`
+  - `POST /auth/google`
+  - `POST /auth/refresh`, `POST /auth/logout`
+  - `GET /users/me/onboarding-state`
+  - `POST /analytics/events`
+- **Specified, not built:**
+  - `PATCH /users/me/profile`
   - `GET /packs?space_type=` (public, CDN-cached 1h, max 4 packs)
   - `POST /gardens`, `PATCH /gardens/:gardenId/plants/:plantId`
   - `POST /notifications/permission`
-  - `POST /analytics/events` (always returns 202)
-- **Still to specify:** `POST /auth/login`, `POST /auth/refresh`, `GET /dashboard` (single call, no waterfall), `PATCH /tasks/:id`, `GET /notifications/vapid-public-key`.
+- **Still to specify:** `GET /dashboard` (single call, no waterfall), `PATCH /tasks/:id`, `GET /notifications/vapid-public-key`.
 
 ### Analytics events
 All events carry `user_id`, `session_id` and a timestamp.
@@ -216,19 +230,23 @@ All events carry `user_id`, `session_id` and a timestamp.
 | OQ-01 | Monetisation | Freemium (5 plants free; paid = unlimited + AI diagnosis) is the leading idea, not decided |
 | OQ-02 | Geocoding provider | Google Maps (~$5 per 1k requests, accurate) vs Nominatim (free, weaker for India and non-Western cities) |
 | OQ-03 | Guest/anonymous onboarding | Redis session keyed by a client UUID, migrated on signup; about 1 extra dev-day |
-| OQ-04 | Email verification | Defer; soft nudge on day 3 |
-| OQ-05 | OAuth popup vs redirect | Redirect + PKCE + Redis state restore. The Google/Apple buttons (A-08, A-09) must follow whatever is decided |
+| OQ-04 | Email verification | **Resolved:** email codes verify every account |
+| OQ-05 | OAuth popup vs redirect | **Resolved:** Google uses GIS ID-token verification, with no popup or redirect of our own |
 | OQ-06 | Push scheduling | BullMQ from day 1 |
 | OQ-07 | Keep step 4 (experience level)? | In the flow for now; the branded mockups already omit it |
 | OQ-08 | Is in-app-only acceptable where Web Push is unsupported? | In-app bell + message |
 | OQ-09 | Domain purchase | Buy `sproutly.app` now |
 | OQ-10 | Day-1 re-engagement | Not designed |
 | OQ-11 | What does picking "Garden bed" give a user, given v1 has no ground-growing support? | Not decided (e.g. default to the balcony pack and tag them for the Phase 4 outdoor path) |
+| OQ-12 | Add Sign in with Apple later? | Deferred; needs a $99/yr Apple developer account. iPhone users use the email code for now |
 
 ## Resolved doc conflicts
 When reading the reference files, apply these rulings:
 - **Name:**
   - "GardenBuddy" in the PRD means Sproutly.
+- **Auth:**
+  - Sign-up is passwordless: Google + email code only.
+  - This supersedes everything password- and Apple-related in the PRD and spec: `POST /auth/signup` and `/auth/oauth`, `password_hash`, bcrypt, password validation, the Apple button, the name field on step 1, and the separate log-in screen.
 - **Flow numbering:**
   - The 8-screen table above is canonical.
   - Mockup "STEP n" labels count progress segments, not screen numbers.
