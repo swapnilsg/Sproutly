@@ -3,7 +3,7 @@
 A web-first garden companion for **beginner hobbyist gardeners** growing on balconies or indoors — "Duolingo for plants", not a power tool.
 North star: *"This is fun and I want to learn more."* Every feature must reduce fear, build curiosity, or celebrate a small win.
 
-Status: scaffolding only. A runnable monorepo exists; no product features yet. The product name **Sproutly is final**.
+Status: onboarding step 1 (passwordless sign-up) is built end to end. Steps 2–8 and the dashboard are placeholders. The product name **Sproutly is final**.
 
 **This file is the source of truth.** Where the reference docs disagree with it, this file wins (see *Resolved doc conflicts* at the end).
 
@@ -20,8 +20,16 @@ docker-compose.yml  postgres:16 (sproutly/sproutly, db sproutly) + redis:7
   - `pnpm install`
   - `pnpm dev` (web + api)
   - `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm format`
-  - `docker compose up -d`
-- Tests: Vitest in both apps. The API uses Supertest against `createApp()`; the web app uses Testing Library + jsdom. The shared ESLint config lives in `packages/config`.
+  - `pnpm test:e2e` (Playwright, desktop + Pixel 7; starts its own API on :4100 and web on :3100)
+  - `docker compose up -d`, then `pnpm --filter @sproutly/api migrate`
+- **Local config:** copy `apps/api/.env.example` to `apps/api/.env` and fill in the two secrets. Sign-in codes print in the API console.
+- **Tests:**
+  - API: Vitest + Supertest against `createApp(deps)`. `src/test/helpers.ts` builds deps with a recording email sender and a mocked Google verifier. The test DB `sproutly_test` is recreated each run; Redis db 1.
+  - Web: Testing Library + jsdom, with `mockApi()` in `src/test/utils.tsx`.
+  - E2E: `apps/web/e2e/`. DB `sproutly_e2e`, Redis db 2. Codes are read from `dev:outbox:{email}` in Redis, and the Google GIS script is stubbed. Every E2E run includes axe WCAG 2.1 AA checks.
+- **Code layout:**
+  - API: `src/auth/` (email codes, Google, tokens, routes), `src/analytics/`, `src/users/`, `migrations/*.sql`.
+  - Web: `src/screens/`, `src/stores/` (auth in memory, onboarding persisted), `src/lib/api.ts`, `src/routes.tsx`.
 - API imports are ESM (NodeNext), so relative imports need `.js` extensions.
 - CI: `.github/workflows/ci.yml` runs install → lint → format:check → typecheck → test → build.
 
@@ -137,7 +145,8 @@ There are 8 screens, and sign-up to first reminder should take under 3 minutes. 
 
 | Token | Hex | Use |
 |---|---|---|
-| Sprout green | `#1D9E75` | Primary, CTAs, logo, selected borders |
+| Sprout green | `#1D9E75` | Primary brand colour: logo, selected borders, focus rings. **Not** for white-text fills: only 3.4:1 contrast |
+| Sprout green dark | `#0F6E56` | CTA button fills (white text 6.2:1) and green text on white |
 | Leaf mid | `#5DCAA5` | Accents, active progress segment |
 | Morning mist | `#E1F5EE` | Card backgrounds, selected tile fill |
 | Terracotta sun | `#F9A23C` | Warmth: tips, streaks, alerts |

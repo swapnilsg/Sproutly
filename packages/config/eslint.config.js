@@ -22,7 +22,15 @@ export default tseslint.config(
   {
     files: ['apps/web/**/*.{ts,tsx}'],
     languageOptions: { globals: globals.browser },
+  },
+  {
+    files: ['apps/web/src/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     rules: reactHooks.configs.recommended.rules,
+  },
+  {
+    // Playwright config and specs run in Node.
+    files: ['apps/web/e2e/**/*.ts', 'apps/web/*.config.ts'],
+    languageOptions: { globals: globals.node },
   },
 );

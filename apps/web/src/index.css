@@ -1,6 +1,7 @@
 :root {
   --sprout-green: #1d9e75;
-  --sprout-green-dark: #0f6e56;
+  --sprout-green-dark: #0f6e56; /* CTA fill: white text needs 4.5:1, #1d9e75 is only 3.4:1 */
+  --sprout-green-deeper: #0b5845;
   --leaf-mid: #5dcaa5;
   --leaf-light: #9fe1cb;
   --morning-mist: #e1f5ee;
@@ -68,12 +69,12 @@ body {
   opacity: 0.7;
 }
 .btn-primary {
-  background: var(--sprout-green);
+  background: var(--sprout-green-dark);
   color: #fff;
   border: none;
 }
 .btn-primary:hover:not(:disabled) {
-  background: var(--sprout-green-dark);
+  background: var(--sprout-green-deeper);
 }
 .btn-ghost {
   background: none;
