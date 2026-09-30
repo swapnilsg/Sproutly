@@ -3,7 +3,17 @@
 A web-first garden companion for **beginner hobbyist gardeners** growing on balconies or indoors — "Duolingo for plants", not a power tool.
 North star: *"This is fun and I want to learn more."* Every feature must reduce fear, build curiosity, or celebrate a small win.
 
-Status: passwordless sign-up is built end to end, currently mounted at `/onboarding/1`. Onboarding **v2** (below) is specified but not built: sign-up moves to step 6, and every other screen is still a placeholder. The product name **Sproutly is final**.
+Status: onboarding v2 is being built step by step (branch `feature/onboarding-welcome`). Built so far:
+- Step 1, Welcome, at `/onboarding/1`.
+- Passwordless sign-up at `/onboarding/6` ("Save your garden") and `/signin` ("Welcome back"). Both use `SignUp` / `VerifyCode` with a `mode` prop (see `apps/web/src/screens/authMode.ts`).
+
+Steps 2–5, 7 and 8 and the dashboard are still placeholders.
+
+**Interim until those steps exist:**
+- "Start my garden" goes straight to `/onboarding/6` (`START_ROUTE` in `Welcome.tsx`). Point it at `/onboarding/2` when step 2 ships.
+- `NEW_USER_STEP` stays `1` until `POST /onboarding/setup` exists. Setting it to 0 now would send new users back to the guest-only Welcome screen.
+
+The product name **Sproutly is final**.
 
 **This file is the source of truth.** Where the reference docs disagree with it, this file wins (see *Resolved doc conflicts* at the end).
 
@@ -237,7 +247,7 @@ All events carry `user_id`, `session_id` and a timestamp.
 | `onboarding_completed` | `total_time_ms` |
 | `first_task_completed` | `in_onboarding`, `task_type` |
 
-`onboarding_started` fires on the Welcome screen. Sign-up reports as step 6 (the built code still sends step 1).
+`onboarding_started` fires on the Welcome screen, once per onboarding attempt. Sign-up reports as step 6. A returning user signing in at `/signin` reports no step, unless the account turns out to be new.
 
 ### Build plan
 - 75 tasks with stable IDs: A-*, OS-*, S2-* to S8-*, AN-*, IN-*. The step tasks (S2–S8) predate onboarding v2; re-plan them from `docs/onboarding_v2_spec.md` before building.

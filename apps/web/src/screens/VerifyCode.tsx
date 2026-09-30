@@ -6,13 +6,15 @@ import { ApiError, apiFetch, friendlyError } from '../lib/api';
 import type { SessionResponse } from '../stores/auth';
 import { useOnboarding } from '../stores/onboarding';
 import { AuthLayout } from './AuthLayout';
+import { AUTH_MODES, type AuthMode } from './authMode';
 import { useCompleteSignIn } from './SignUp';
 
 const RESEND_COOLDOWN_S = 30;
 
-export function VerifyCode() {
+export function VerifyCode({ mode }: { mode: AuthMode }) {
   const navigate = useNavigate();
-  const completeSignIn = useCompleteSignIn();
+  const completeSignIn = useCompleteSignIn(mode);
+  const { base } = AUTH_MODES[mode];
   const { pendingEmail, setPendingEmail } = useOnboarding();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function VerifyCode() {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  if (!pendingEmail) return <Navigate to="/onboarding/1" replace />;
+  if (!pendingEmail) return <Navigate to={base} replace />;
   const email = pendingEmail;
 
   async function resend(reason: string) {
@@ -134,7 +136,7 @@ export function VerifyCode() {
           className="link-button"
           onClick={() => {
             setPendingEmail(null);
-            navigate('/onboarding/1', { replace: true });
+            navigate(base, { replace: true });
           }}
         >
           Use a different email

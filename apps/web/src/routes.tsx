@@ -3,6 +3,7 @@ import { homeRoute, useAuth } from './stores/auth';
 import { Placeholder } from './screens/Placeholder';
 import { SignUp } from './screens/SignUp';
 import { VerifyCode } from './screens/VerifyCode';
+import { Welcome } from './screens/Welcome';
 
 function Splash() {
   return (
@@ -12,7 +13,7 @@ function Splash() {
   );
 }
 
-/** Step 1 is for signed-out visitors; signed-in users go to where they left off. */
+/** Welcome, save-your-garden and sign-in are for signed-out visitors; signed-in users go to where they left off. */
 function GuestOnly() {
   const { status, session } = useAuth();
   if (status === 'loading') return <Splash />;
@@ -50,8 +51,11 @@ export const routes: RouteObject[] = [
   {
     element: <GuestOnly />,
     children: [
-      { path: '/onboarding/1', element: <SignUp /> },
-      { path: '/onboarding/1/code', element: <VerifyCode /> },
+      { path: '/onboarding/1', element: <Welcome /> },
+      { path: '/onboarding/6', element: <SignUp mode="save" /> },
+      { path: '/onboarding/6/code', element: <VerifyCode mode="save" /> },
+      { path: '/signin', element: <SignUp mode="signin" /> },
+      { path: '/signin/code', element: <VerifyCode mode="signin" /> },
     ],
   },
   {
