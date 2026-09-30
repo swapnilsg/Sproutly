@@ -3,7 +3,7 @@
 A web-first garden companion for **beginner hobbyist gardeners** growing on balconies or indoors — "Duolingo for plants", not a power tool.
 North star: *"This is fun and I want to learn more."* Every feature must reduce fear, build curiosity, or celebrate a small win.
 
-Status: onboarding step 1 (passwordless sign-up) is built end to end. Steps 2–8 and the dashboard are placeholders. The product name **Sproutly is final**.
+Status: passwordless sign-up is built end to end, currently mounted at `/onboarding/1`. Onboarding **v2** (below) is specified but not built: sign-up moves to step 6, and every other screen is still a placeholder. The product name **Sproutly is final**.
 
 **This file is the source of truth.** Where the reference docs disagree with it, this file wins (see *Resolved doc conflicts* at the end).
 
@@ -36,8 +36,9 @@ docker-compose.yml  postgres:16 (sproutly/sproutly, db sproutly) + redis:7
 ## Reference files (`docs/`)
 | File | Contents |
 |---|---|
+| `onboarding_v2_spec.md` | **Current** onboarding spec: per-screen copy, defaults, data, analytics, new API and migrations |
 | `sproutly_full_summary.html` | Product, roadmap, brand, tech and open-questions summary |
-| `GardenBuddy_Onboarding_PRD.docx` | Onboarding PRD v1.0: per-screen specs, copy, analytics events (written under the old name) |
+| `GardenBuddy_Onboarding_PRD.docx` | Onboarding PRD v1.0 (old name). Its flow is superseded by v2; copy rules and metrics still apply |
 | `Sproutly_Onboarding_TechSpec.docx` | Engineering spec: SQL models, API contracts, Zustand store, component tree, 75 tasks |
 | `onboarding_flow_overview.png` | Onboarding flowchart |
 | `sample screens.docx` | Dark-mode mockups: space, starter pack, meet plant, dashboard (one embedded PNG) |
@@ -48,7 +49,7 @@ To read a .docx: `python3 -c "import zipfile,re,sys;print(re.sub(r'<[^>]+>','',z
 
 ## User & platform
 - Persona: **Sam, 28**. First-time plant parent with a sunny balcony who wants to grow herbs. Scared of killing plants, doesn't know the jargon, won't read a manual.
-- v1 growing contexts: balcony/containers and indoor houseplants. Outdoor ground growing is not supported in v1 (see OQ-11).
+- v1 growing contexts: balcony/containers and indoor houseplants. Outdoor ground growing is not supported in v1, so there is no "Garden bed" option.
 - Web-first: desktop and tablet are primary; mobile web must be fully responsive (320–1440px). Native apps are out of scope for v1.
 - Browsers: Chrome, Firefox and Edge 100+; Safari 15+. Web Push needs Safari 16.4+.
 
@@ -71,55 +72,56 @@ To read a .docx: `python3 -c "import zipfile,re,sys;print(re.sub(r'<[^>]+>','',z
 - **Phase 4 (premium):** AI chat assistant, seed/supply shop, multi-garden support, upgrade path to outdoor beds.
 - **Not in v1:** garden layout map, seed inventory, harvest logging, companion planting, soil sensors, social/referral features, paid upsell during onboarding.
 
-## Onboarding flow (canonical)
-There are 8 screens, and sign-up to first reminder should take under 3 minutes. Step numbers below are the canonical ones for code, analytics and docs.
+## Onboarding flow (canonical: v2)
+Full detail is in `docs/onboarding_v2_spec.md`. There are 8 screens: 5 quick taps before sign-up, then a first completed task inside onboarding. The goal is landing → first win in under 3 minutes.
 
-| # | Screen | Progress bar | Notes |
-|---|---|---|---|
-| 1 | Sign up | none | "Continue with Google" (+ One Tap) or "Continue with email" → 6-digit code. No passwords, no name field (step 2 asks). Same screen doubles as "Welcome back". |
-| 2 | Welcome: name + location | segment 1 | Location is used for hardiness zone and frost dates. Geocoding is async and never blocks. |
-| 3 | Choose your space | segment 2 | 2×2 tiles: Balcony, Indoors, Garden bed, Not sure yet. Multi-select via "Pick multiple spaces". |
-| 4 | Experience level | segment 3 | "Total beginner" is pre-selected. Auto-advances after 2.5s with a visible countdown; any key, click or touch cancels it. |
-| 5 | Pick a starter pack | segment 4 | The best-fit pack is pre-selected. Ghost CTA: "I'll add plants myself" (goes to plant search). |
-| 6 | Meet your first plant | segment 5 | Care card plus optional nickname (max 32 chars). The schedule is auto-filled and review-only here. |
-| 7 | Enable reminders | none | Dark screen. Web push is asked **last**. |
-| 8 | Aha moment: dashboard | none | Output only. Onboarding completes here. |
+| # | Screen | Route / access | Progress bar | Notes |
+|---|---|---|---|---|
+| 1 | Welcome | `/onboarding/1`, guests only | none | "Keep your first plants alive". CTA "Start my garden"; link "I already have an account" → `/signin`. |
+| 2 | Where will your plants live? | anyone | segment 1 | Balcony / Indoors / Not sure yet (multi-select; "Not sure" is exclusive). Default: Balcony. No Garden bed. |
+| 3 | How sunny is that spot? | anyone | segment 2 | Bright sun / Some sun / Mostly shade / Not sure. Default: Not sure. Replaces experience level. |
+| 4 | Pick your starter pack | anyone | segment 3 | Pre-selected from space × sunlight. Editable city chip (IP guess via Cloudflare headers). "Choose my own plants" (max 5). |
+| 5 | Meet your plant | anyone | segment 4 | Care card, optional nickname, and **"Do you have these plants yet?"** (no default; the CTA waits for an answer). |
+| 6 | Save your garden (sign-up) | `/onboarding/6` + `/6/code`, guests only | segment 5 | The built Google / email-code screens, retitled "Your garden is ready 🌱". Then `POST /onboarding/setup`. |
+| 7 | Reminders | signed in | none | Pick a daily time (default 8:00, browser timezone), then push permission / "Maybe later". |
+| 8 | Your first win | signed in | none | Dashboard with one task doable right now (check soil, or "Pick up your [plant]"). Ticking it shows the confetti. Completes onboarding. |
 
-- **Progress bar:** 5 segments covering steps 2–6, coloured done (teal), active (light teal) and idle (grey). The mockup labels such as "STEP 2 — CHOOSE YOUR SPACE" count progress segments, not screen numbers.
-- The flowchart's "Add first plant" and "Set care schedule" boxes are both step 6.
-- **Skip to dashboard:**
-  - Shown from step 2 onward as small secondary text below the CTA. Never hidden or deceptive.
-  - Skipping sets `onboarding_done`, and the user lands on an empty dashboard with a single CTA: "Add your first plant — takes 2 minutes".
-- **Starter packs (v1, 3 packs):**
+- **Guest steps:**
+  - Answers from steps 2–5 live only in the persisted onboarding store (`sproutly_onboarding_v1`). They go to the server in one `POST /onboarding/setup` after sign-in; there are no guest sessions on the server (resolves OQ-03).
+  - Signed-in users without a garden also go through steps 2–5, and skip step 6.
+  - A `409 garden_exists` response from setup means a returning user: drop the local answers and go home.
+- **Step mapping:** `users.onboarding_step` = last completed step. `0` = account but no garden; `6` = setup saved; `7` = reminders done. `onboarding_done` is set when step 8 renders. New accounts start at 0.
+- **Skip for now:** shown on steps 2–5. It fills defaults (balcony, not sure, recommended pack, plants "not yet") and jumps to step 6. There's no skip after that, and no skip-to-empty-dashboard path.
+- **Pack recommendation:**
+  - Balcony, unknown space, or mixed spaces with bright/some/unknown sun → Easy balcony herbs.
+  - Indoors-only, or any shade → Beginner houseplants.
+  - Flowers are never the default.
+  - A pack that needs more sun than the spot gets shows "Needs more sun than your spot gets".
+- **Starter packs (v1):**
   - Easy balcony herbs 🌿 (basil, mint, chives)
   - Beginner houseplants 🪴 (pothos, snake plant, peace lily)
   - Balcony flowers 🌸 (petunias, marigolds, lavender)
-  - Default pack by space: balcony → herbs; indoors → houseplants; not sure → herbs.
-- **Reminders (step 7):**
-  - If the user denies: record it, continue, show an in-app bell, and re-prompt after 7 days.
-  - If the browser has no Web Push (Safari < 16.4): hide the ask and show "We'll remind you in-app instead."
-- **Dashboard (step 8):**
-  - Confetti banner "Your garden is ready! [N] plants added", shown once and auto-dismissed after 4s.
-  - Watering tasks for today and tomorrow.
-  - One amber "Quick tip" card, 2 sentences max.
-  - No tutorial overlays.
-- **Resume:** progress is saved after every step (localStorage + server), and a returning user continues from their last completed step. Anonymous-session resume depends on OQ-03.
+- **First tasks:**
+  - Owned plants: "Check if the soil is dry" (first task) plus watering from today.
+  - Not owned: "Pick up your [plant]" tasks; watering starts once each is done.
+- **Reminders:** if the user denies, record it, carry on, show the in-app bell, and re-prompt after 7 days. Without Web Push (Safari < 16.4): "We'll remind you in the app instead."
+- **Names:** Google provides the first name. Email users aren't asked during onboarding; the greeting falls back to "Good morning 🌱".
 
 ### Key copy
 | Screen | Copy |
 |---|---|
-| Sign up | "Grow with confidence, one plant at a time" / "Create your account" |
-| Welcome | "Nice to meet you, [name]!" — "Where are you growing from?" Privacy line: "Used only to personalise your care advice — never shared." |
-| Space | "Where do you grow?" |
-| Experience | "How much do you know about plants?" — "No judgement — we all start somewhere." |
-| Pack | "Start with a bundle?" — CTA "Add these to my garden" |
-| Meet plant | "Say hi to your [plant]!" — CTA "Looks good — set my reminders" |
-| Reminders | "Never forget to water again" — "We'll remind you exactly when each plant needs care — nothing more, nothing less." CTA "Turn on reminders" / ghost CTA "Maybe later" |
-| Dashboard | "Good morning, [name]" — "[N] plants are counting on you today" |
+| Welcome | "Keep your first plants alive" — "We'll tell you exactly what to do, every day." CTA "Start my garden"; "Free · takes about 2 minutes" |
+| Space | "Where will your plants live?" — "Pick all that apply." CTA "That's where they'll live" |
+| Sunlight | "How sunny is that spot?" — "Your best guess is fine — you can change it later." CTA "Show me plants that fit" |
+| Pack | "Start with a bundle?" — "We've picked plants that suit your spot — all easy to keep alive." CTA "Add these to my garden" |
+| Meet plant | "Say hi to your [plant]!" — "Do you have these plants yet?" CTA "Save my garden" |
+| Save garden | "Your garden is ready 🌱" — "Save it so we can remind you when your plants need you." Tagline stays "Grow with confidence, one plant at a time" |
+| Reminders | "Never forget to water again" — "We'll send one reminder a day, only when a plant needs you." CTA "Turn on reminders" / "Maybe later" |
+| First win | "Good morning, [name]" — "[N] plants are counting on you"; after the first tick: "Your first win! 🌱 Your garden is off to a great start." |
 
 ### UX and copy rules
 - One meaningful question per screen.
-- Every screen has a sensible pre-selected default, and it is always the genuine beginner recommendation.
+- Every screen has a sensible pre-selected default, and it is always the genuine beginner recommendation. The one exception is step 5's "Do you have these plants yet?": a wrong guess would make day 1's tasks wrong.
 - Plain English only, no botanical jargon. Beginner mode adds tap-to-define on technical terms after onboarding.
 - Warm "knowledgeable friend" tone, sentence case everywhere, max 2 sentences of body copy per screen.
 - CTAs describe the outcome ("Set my reminders", not "Continue").
@@ -166,7 +168,7 @@ There are 8 screens, and sign-up to first reminder should take under 3 minutes. 
 ## Tech stack
 - **FE:** React + Zustand.
   - Persist key `sproutly_onboarding_v1`. On load: rehydrate from localStorage, then reconcile with the server. The server wins on step number; local wins on unsaved form data.
-  - Routes: `/onboarding/:step` (1–8) and `/dashboard`. Step components are lazy-loaded.
+  - Routes: `/onboarding/:step` (1–8, with `/onboarding/6/code`), `/signin` (+ `/signin/code`) and `/dashboard`. Step components are lazy-loaded.
 - **API:** Node/Express (no Passport). REST under `/api/v1`, JSON only. zod validation returns 422 with field errors. Global error handler with no stack traces in production.
 - **Data:** PostgreSQL. Redis holds sessions, rate limits, the onboarding cache (`onboarding:{userId}`, 30-day TTL) and the analytics queue (flushed every 10s).
 - **Auth (passwordless):**
@@ -192,13 +194,18 @@ There are 8 screens, and sign-up to first reminder should take under 3 minutes. 
 - Onboarding chunk < 120 KB gzipped; total onboarding payload < 500 KB.
 - API p95 < 300 ms.
 - WCAG 2.1 AA, full keyboard support (tiles activate with Enter/Space), screen-reader labels.
-- `POST /gardens` runs in a single transaction and is idempotent on `pack_id`.
-- `users.onboarding_step` holds the last completed step (0–7). It only increments; lower values are ignored.
+- `POST /onboarding/setup` runs in a single transaction (profile, garden, plants, first tasks) and returns 409 if a garden already exists.
+- `users.onboarding_step` holds the last completed step (0, 6 or 7 in v2). It only increments; lower values are ignored.
 
 ### Data model
 - **Built:** `users` (no `password_hash`), `auth_identities`, `refresh_tokens`, `onboarding_events` (migrations in `apps/api/migrations/`).
-- **Specified, not built:** `gardens`, `garden_plants` (with `care_schedule` JSONB).
-- **Still to specify:** `plants`, `packs` (+ pack→plant join), `tasks`, `push_subscriptions`, `tips`.
+- **Specified, not built** (see `docs/onboarding_v2_spec.md`):
+  - `users` + `sunlight`, `reminder_time`, `timezone`, `location_source`
+  - `plants`, `packs`, `pack_plants`
+  - `gardens` (one per user)
+  - `garden_plants` (+ `owned`)
+  - `tasks` (`water` / `check_soil` / `buy`, `is_first_task`)
+- **Still to specify:** `push_subscriptions`, `tips`.
 
 ### API
 - **Built (auth):**
@@ -208,11 +215,14 @@ There are 8 screens, and sign-up to first reminder should take under 3 minutes. 
   - `GET /users/me/onboarding-state`
   - `POST /analytics/events`
 - **Specified, not built:**
-  - `PATCH /users/me/profile`
-  - `GET /packs?space_type=` (public, CDN-cached 1h, max 4 packs)
-  - `POST /gardens`, `PATCH /gardens/:gardenId/plants/:plantId`
+  - `GET /geo/guess`
+  - `POST /onboarding/setup`
+  - `PATCH /users/me/reminders`, `PATCH /users/me/onboarding`
+  - `PATCH /tasks/:id`
   - `POST /notifications/permission`
-- **Still to specify:** `GET /dashboard` (single call, no waterfall), `PATCH /tasks/:id`, `GET /notifications/vapid-public-key`.
+  - `PATCH /gardens/:gardenId/plants/:plantId`
+- **Superseded by setup:** `PATCH /users/me/profile` and `POST /gardens` from the tech spec.
+- **Still to specify:** `GET /dashboard` (single call, no waterfall), `GET /notifications/vapid-public-key`.
 
 ### Analytics events
 All events carry `user_id`, `session_id` and a timestamp.
@@ -220,15 +230,17 @@ All events carry `user_id`, `session_id` and a timestamp.
 | Event | Extra properties |
 |---|---|
 | `onboarding_started` | — |
-| `onboarding_step_completed` | `step`, `time_on_step` |
+| `onboarding_step_completed` | `step`, `time_on_step`, plus the step's answer (`space_types`, `sunlight`, `plants_owned`, `has_nickname`, `method`, `is_new_user`) |
 | `onboarding_skipped` | `step` |
-| `starter_pack_selected` | `pack_name` |
-| `notification_permission_granted` / `notification_permission_denied` | `browser`, `os` |
+| `starter_pack_selected` | `pack_name`, `recommended`, or `custom` + `count` |
+| `notification_permission_granted` / `notification_permission_denied` | `browser`, `os`, `reminder_time` |
 | `onboarding_completed` | `total_time_ms` |
-| `first_task_completed` | — |
+| `first_task_completed` | `in_onboarding`, `task_type` |
+
+`onboarding_started` fires on the Welcome screen. Sign-up reports as step 6 (the built code still sends step 1).
 
 ### Build plan
-- 75 tasks with stable IDs: A-*, OS-*, S2-* to S8-*, AN-*, IN-*.
+- 75 tasks with stable IDs: A-*, OS-*, S2-* to S8-*, AN-*, IN-*. The step tasks (S2–S8) predate onboarding v2; re-plan them from `docs/onboarding_v2_spec.md` before building.
 - Sizes: 11 XS, 34 S, 24 M, 6 L. That sums to **~55–60 dev-days solo**. The spec's "~83 days" came from a summary table that doesn't match the task rows.
 - Week 1 must deliver auth (A-01 to A-06) and env/DB setup (IN-01, IN-02) before steps can be integrated end to end.
 - Accessibility and responsive QA (IN-07, IN-08) cover all 8 screens at 320, 375, 768 and 1280px.
@@ -238,16 +250,17 @@ All events carry `user_id`, `session_id` and a timestamp.
 |---|---|---|
 | OQ-01 | Monetisation | Freemium (5 plants free; paid = unlimited + AI diagnosis) is the leading idea, not decided |
 | OQ-02 | Geocoding provider | Google Maps (~$5 per 1k requests, accurate) vs Nominatim (free, weaker for India and non-Western cities) |
-| OQ-03 | Guest/anonymous onboarding | Redis session keyed by a client UUID, migrated on signup; about 1 extra dev-day |
+| OQ-03 | Guest/anonymous onboarding | **Resolved (v2):** steps 2–5 run as a guest with answers in the browser, saved by `POST /onboarding/setup` after sign-in. No server-side guest sessions |
 | OQ-04 | Email verification | **Resolved:** email codes verify every account |
 | OQ-05 | OAuth popup vs redirect | **Resolved:** Google uses GIS ID-token verification, with no popup or redirect of our own |
 | OQ-06 | Push scheduling | BullMQ from day 1 |
-| OQ-07 | Keep step 4 (experience level)? | In the flow for now; the branded mockups already omit it |
+| OQ-07 | Keep step 4 (experience level)? | **Resolved (v2):** cut. Replaced by the sunlight question; everyone gets beginner mode |
 | OQ-08 | Is in-app-only acceptable where Web Push is unsupported? | In-app bell + message |
 | OQ-09 | Domain purchase | Buy `sproutly.app` now |
 | OQ-10 | Day-1 re-engagement | Not designed |
-| OQ-11 | What does picking "Garden bed" give a user, given v1 has no ground-growing support? | Not decided (e.g. default to the balcony pack and tag them for the Phase 4 outdoor path) |
+| OQ-11 | What does picking "Garden bed" give a user, given v1 has no ground-growing support? | **Resolved (v2):** the tile is removed from v1; it may return as "coming soon / notify me" in Phase 4 |
 | OQ-12 | Add Sign in with Apple later? | Deferred; needs a $99/yr Apple developer account. iPhone users use the email code for now |
+| OQ-13 | Does sign-up at step 6 actually beat step 1? | Planned experiment once there's traffic: onboarding completion and day-3 retention |
 
 ## Resolved doc conflicts
 When reading the reference files, apply these rulings:
@@ -256,16 +269,16 @@ When reading the reference files, apply these rulings:
 - **Auth:**
   - Sign-up is passwordless: Google + email code only.
   - This supersedes everything password- and Apple-related in the PRD and spec: `POST /auth/signup` and `/auth/oauth`, `password_hash`, bcrypt, password validation, the Apple button, the name field on step 1, and the separate log-in screen.
-- **Flow numbering:**
-  - The 8-screen table above is canonical.
+- **Onboarding v2 supersedes the PRD flow:**
+  - `docs/onboarding_v2_spec.md` replaces the PRD's screen order, the name + location screen, the experience-level screen (with its auto-advance), the "Garden bed" tile, and "Skip to dashboard".
+  - Sign-up moves from step 1 to step 6.
+  - The PRD's copy rules, metrics and reminder rules still apply.
+- **Mockups:**
   - Mockup "STEP n" labels count progress segments, not screen numbers.
-  - The flowchart's two plant boxes are one screen (step 6).
+  - The flowchart's "Add first plant" and "Set care schedule" boxes are both step 5 (Meet your plant).
+  - The branded sign-up mockup's name/password fields are superseded by Google + email code.
 - **Progress bar:**
   - The PRD's "5 dots" is the 5-segment bar over steps 2–6.
-- **Skip link:**
-  - It appears from step 2. This overrides the PRD's step-3 table.
-- **Experience level:**
-  - Auto-advance is 2.5s with a countdown (tech spec), not the PRD's 3s.
 - **Sign-up headline:**
   - The branded mockup's "Grow with confidence, one plant at a time" replaces the PRD's "Start growing with confidence."
 - **Tip card:**
@@ -278,4 +291,5 @@ When reading the reference files, apply these rulings:
   - Use ~55–60 days, not 83.
   - "7 screens" in IN-07 and IN-08 means all 8.
 - **Anonymous resume:**
-  - The PRD's "anonymous sessions" resume applies only if OQ-03 is approved.
+  - Guests resume from the persisted onboarding store (steps 2–5).
+  - The server only tracks steps once an account exists (v2 step mapping).
