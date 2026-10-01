@@ -37,7 +37,12 @@ export function sessionResponse(overrides: Record<string, unknown> = {}) {
 
 export function renderAt(path: string, session: Session | null = null) {
   useAuth.setState({ status: session ? 'signed_in' : 'signed_out', session });
-  useOnboarding.setState({ pendingEmail: null, step1StartedAt: null, spaceTypes: null });
+  useOnboarding.setState({
+    pendingEmail: null,
+    step1StartedAt: null,
+    spaceTypes: null,
+    sunlight: null,
+  });
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(<RouterProvider router={router} />);
   return router;

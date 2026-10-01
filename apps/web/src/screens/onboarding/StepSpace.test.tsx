@@ -49,13 +49,13 @@ describe('Step 2 — where will your plants live?', () => {
     expect(screen.queryByRole('button', { name: 'That’s where they’ll live' })).toBeNull();
   });
 
-  it('saves the answer, tracks it and continues to Save your garden', async () => {
+  it('saves the answer, tracks it and continues to step 3', async () => {
     const { calls, router } = await atStep2();
     await userEvent.click(tile(/^Indoors/));
     await userEvent.click(screen.getByRole('button', { name: 'That’s where they’ll live' }));
 
-    await screen.findByRole('heading', { name: 'Your garden is ready 🌱' });
-    expect(router.state.location.pathname).toBe('/onboarding/6');
+    await screen.findByRole('heading', { name: 'How sunny is that spot?' });
+    expect(router.state.location.pathname).toBe('/onboarding/3');
     expect(useOnboarding.getState().spaceTypes).toEqual(['balcony', 'indoors']);
     expect(event(calls, 'onboarding_step_completed')).toMatchObject({
       properties: { step: 2, space_types: ['balcony', 'indoors'] },
@@ -73,12 +73,13 @@ describe('Step 2 — where will your plants live?', () => {
     expect(tile(/^Balcony/)).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('"Skip for now" uses the default and goes to Save your garden', async () => {
+  it('"Skip for now" fills every default and jumps to Save your garden', async () => {
     const { calls, router } = await atStep2();
     await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }));
     await screen.findByRole('heading', { name: 'Your garden is ready 🌱' });
     expect(router.state.location.pathname).toBe('/onboarding/6');
     expect(useOnboarding.getState().spaceTypes).toEqual(['balcony']);
+    expect(useOnboarding.getState().sunlight).toBe('unknown');
     expect(event(calls, 'onboarding_skipped')).toMatchObject({ properties: { step: 2 } });
     expect(event(calls, 'onboarding_step_completed')).toBeUndefined();
   });
@@ -90,7 +91,7 @@ describe('Step 2 — where will your plants live?', () => {
     expect(router.state.location.pathname).toBe('/onboarding/1');
   });
 
-  it('signed-in users get no back button and continue to the next question', async () => {
+  it('signed-in users get no back button and continue to step 3', async () => {
     const { router } = await atStep2({
       token: 't',
       userId: 'u',
@@ -99,7 +100,7 @@ describe('Step 2 — where will your plants live?', () => {
     });
     expect(screen.queryByRole('link', { name: 'Back' })).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'That’s where they’ll live' }));
-    await screen.findByRole('heading', { name: 'Onboarding step 3' });
+    await screen.findByRole('heading', { name: 'How sunny is that spot?' });
     expect(router.state.location.pathname).toBe('/onboarding/3');
   });
 

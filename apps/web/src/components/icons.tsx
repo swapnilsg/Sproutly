@@ -74,3 +74,40 @@ export function SproutIcon() {
     </Icon>
   );
 }
+
+export function SunIcon() {
+  return (
+    <Icon size={26}>
+      <circle cx="12" cy="12" r="4.2" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" />
+    </Icon>
+  );
+}
+
+export function SunCloudIcon() {
+  return (
+    <Icon size={26}>
+      <circle cx="9" cy="8.5" r="3.2" />
+      <path d="M9 2.5v1.5M3 8.5h1.5M4.8 4.3l1 1M13.2 4.3l-1 1" />
+      <path d="M8 19.5h9.5a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.3 1.4A2.8 2.8 0 0 0 8 19.5z" />
+    </Icon>
+  );
+}
+
+export function CloudIcon() {
+  return (
+    <Icon size={26}>
+      <path d="M7 18.5h10.5a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.6 1.6A3.2 3.2 0 0 0 7 18.5z" />
+    </Icon>
+  );
+}
+
+export function QuestionIcon() {
+  return (
+    <Icon size={26}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7" />
+      <path d="M12 17.2h.01" />
+    </Icon>
+  );
+}
