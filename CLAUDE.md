@@ -3,14 +3,19 @@
 A web-first garden companion for **beginner hobbyist gardeners** growing on balconies or indoors — "Duolingo for plants", not a power tool.
 North star: *"This is fun and I want to learn more."* Every feature must reduce fear, build curiosity, or celebrate a small win.
 
-Status: onboarding v2 is being built step by step (branch `feature/onboarding-welcome`). Built so far:
+Status: onboarding v2 is being built step by step, one feature branch per step. Built so far:
 - Step 1, Welcome, at `/onboarding/1`.
+- Step 2, "Where will your plants live?", at `/onboarding/2`. It's built on the shared `QuestionLayout` (`src/screens/onboarding/`), which steps 3–5 will reuse.
 - Passwordless sign-up at `/onboarding/6` ("Save your garden") and `/signin` ("Welcome back"). Both use `SignUp` / `VerifyCode` with a `mode` prop (see `apps/web/src/screens/authMode.ts`).
 
-Steps 2–5, 7 and 8 and the dashboard are still placeholders.
+Steps 3–5, 7 and 8 and the dashboard are still placeholders.
 
 **Interim until those steps exist:**
-- "Start my garden" goes straight to `/onboarding/6` (`START_ROUTE` in `Welcome.tsx`). Point it at `/onboarding/2` when step 2 ships.
+- **After a question step:** `nextAfter()` in `apps/web/src/onboarding/flow.ts` picks where to go. Add each new step to `BUILT_QUESTION_STEPS` there.
+  - Guests go from step 2 to `/onboarding/6` (Save your garden).
+  - Signed-in users without a garden go on to the step 3 placeholder.
+- **Answers:** step 2–5 answers live in the onboarding store (`spaceTypes` so far). They survive sign-in; only setup will clear them.
+- **Log out:** only on the placeholder screens for now.
 - `NEW_USER_STEP` stays `1` until `POST /onboarding/setup` exists. Setting it to 0 now would send new users back to the guest-only Welcome screen.
 
 The product name **Sproutly is final**.
@@ -39,7 +44,7 @@ docker-compose.yml  postgres:16 (sproutly/sproutly, db sproutly) + redis:7
   - E2E: `apps/web/e2e/`. DB `sproutly_e2e`, Redis db 2. Codes are read from `dev:outbox:{email}` in Redis, and the Google GIS script is stubbed. Every E2E run includes axe WCAG 2.1 AA checks.
 - **Code layout:**
   - API: `src/auth/` (email codes, Google, tokens, routes), `src/analytics/`, `src/users/`, `migrations/*.sql`.
-  - Web: `src/screens/`, `src/stores/` (auth in memory, onboarding persisted), `src/lib/api.ts`, `src/routes.tsx`.
+  - Web: `src/screens/` (onboarding question steps in `src/screens/onboarding/`), `src/onboarding/flow.ts` (step order, defaults, answer rules), `src/components/` (Button, TextField, ProgressBar, icons), `src/stores/` (auth in memory, onboarding persisted), `src/lib/api.ts`, `src/routes.tsx`.
 - API imports are ESM (NodeNext), so relative imports need `.js` extensions.
 - CI: `.github/workflows/ci.yml` runs install → lint → format:check → typecheck → test → build.
 

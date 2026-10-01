@@ -76,6 +76,18 @@ describe('Code screen', () => {
     expect(router.state.location.pathname).toBe('/onboarding/6');
   });
 
+  it('keeps the step 2–5 answers after signing in', async () => {
+    mockApi({
+      '/analytics/events': () => ({ status: 202 }),
+      '/auth/email/verify': () => ({ status: 200, body: sessionResponse() }),
+    });
+    const router = atCodeScreen();
+    useOnboarding.setState({ spaceTypes: ['indoors'] });
+    await userEvent.type(await screen.findByLabelText('Sign-in code'), '123456');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding/2'));
+    expect(useOnboarding.getState().spaceTypes).toEqual(['indoors']);
+  });
+
   it('auto-submits six digits and continues to step 2', async () => {
     const { calls } = mockApi({
       '/analytics/events': () => ({ status: 202 }),
@@ -219,13 +231,13 @@ describe('Route guards', () => {
 
   it('skips the guest screens for signed-in users', async () => {
     const router = renderAt('/onboarding/1', session);
-    await screen.findByRole('heading', { name: 'Onboarding step 2' });
+    await screen.findByRole('heading', { name: 'Where will your plants live?' });
     expect(router.state.location.pathname).toBe('/onboarding/2');
   });
 
   it('does not allow jumping ahead', async () => {
-    const router = renderAt('/onboarding/5', session);
-    await screen.findByRole('heading', { name: 'Onboarding step 2' });
+    const router = renderAt('/onboarding/7', session);
+    await screen.findByRole('heading', { name: 'Where will your plants live?' });
     expect(router.state.location.pathname).toBe('/onboarding/2');
   });
 

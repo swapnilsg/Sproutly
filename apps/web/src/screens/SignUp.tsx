@@ -16,7 +16,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function useCompleteSignIn(mode: AuthMode) {
   const navigate = useNavigate();
   return (res: SessionResponse, method: 'google' | 'email') => {
-    const { step1StartedAt, reset } = useOnboarding.getState();
+    const { step1StartedAt, setPendingEmail } = useOnboarding.getState();
     useAuth.getState().setSession(res);
     // Saving the garden is onboarding step 6. A returning user signing in completes no step,
     // unless they turn out to be new.
@@ -29,7 +29,8 @@ export function useCompleteSignIn(mode: AuthMode) {
       });
     }
     navigate(homeRoute(useAuth.getState().session!), { replace: true });
-    reset();
+    // Keep the step 2–5 answers: they're saved to the server by setup, not here.
+    setPendingEmail(null);
   };
 }
 

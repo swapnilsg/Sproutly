@@ -4,9 +4,7 @@ import { SproutMark } from '../components/Logo';
 import { track } from '../lib/analytics';
 import { useOnboarding } from '../stores/onboarding';
 
-// Steps 2–5 aren't built yet, so "Start my garden" goes straight to "Save your garden".
-// Switch to '/onboarding/2' when step 2 ships.
-export const START_ROUTE = '/onboarding/6';
+export const START_ROUTE = '/onboarding/2';
 
 function DropIcon() {
   return (

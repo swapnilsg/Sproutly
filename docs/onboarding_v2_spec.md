@@ -88,8 +88,9 @@ Steps 1–5 are never recorded on the server; they're guest steps. New accounts 
   - 🪴 **Balcony** — "Pots, railings and window boxes"
   - 🏠 **Indoors** — "Windowsills, shelves and rooms"
   - 🌱 **Not sure yet** — "We'll suggest easy options". Exclusive: selecting it clears the others, and selecting another tile clears it.
-- CTA: **"That's where they'll live"**
+- CTA: **"That's where they'll live"**. When nothing is selected, the button is disabled and reads **"Pick at least one place"**.
 - "Skip for now"
+- Back button (top left) → Welcome. It's hidden for signed-in users, because Welcome is guests-only.
 
 **Default:** Balcony pre-selected (the persona's case).
 

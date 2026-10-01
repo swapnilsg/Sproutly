@@ -34,12 +34,12 @@ describe('Welcome screen (step 1)', () => {
     expect(router.state.location.pathname).toBe('/onboarding/1');
   });
 
-  it('"Start my garden" goes to Save your garden (until steps 2–5 exist)', async () => {
+  it('"Start my garden" goes to step 2', async () => {
     mockApi({ '/analytics/events': () => ({ status: 202 }) });
     const router = renderAt('/onboarding/1');
     await userEvent.click(await screen.findByRole('link', { name: 'Start my garden' }));
-    await screen.findByRole('heading', { name: 'Your garden is ready 🌱' });
-    expect(router.state.location.pathname).toBe('/onboarding/6');
+    await screen.findByRole('heading', { name: 'Where will your plants live?' });
+    expect(router.state.location.pathname).toBe('/onboarding/2');
   });
 
   it('"I already have an account" goes to sign-in', async () => {
@@ -70,7 +70,7 @@ describe('Welcome screen (step 1)', () => {
       onboardingStep: 1,
       onboardingDone: false,
     });
-    await screen.findByRole('heading', { name: 'Onboarding step 2' });
+    await screen.findByRole('heading', { name: 'Where will your plants live?' });
     expect(router.state.location.pathname).toBe('/onboarding/2');
   });
 });
