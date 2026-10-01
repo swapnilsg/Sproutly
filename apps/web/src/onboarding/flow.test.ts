@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextAfter, toggleSpace } from './flow';
+import { nextAfter, skipRoute, toggleSpace } from './flow';
 
 describe('toggleSpace', () => {
   it('adds and removes places', () => {
@@ -25,11 +25,26 @@ describe('toggleSpace', () => {
 });
 
 describe('nextAfter', () => {
-  it('sends guests to Save your garden after the last built question', () => {
-    expect(nextAfter(2, false)).toBe('/onboarding/6');
+  it('moves through the built question steps', () => {
+    expect(nextAfter(2, false)).toBe('/onboarding/3');
+    expect(nextAfter(2, true)).toBe('/onboarding/3');
   });
 
-  it('sends signed-in users on to the next question step', () => {
-    expect(nextAfter(2, true)).toBe('/onboarding/3');
+  it('sends guests to Save your garden after the last built question', () => {
+    expect(nextAfter(3, false)).toBe('/onboarding/6');
+  });
+
+  it('sends signed-in users to the first unbuilt question for now', () => {
+    expect(nextAfter(3, true)).toBe('/onboarding/4');
+  });
+});
+
+describe('skipRoute', () => {
+  it('jumps guests straight to Save your garden', () => {
+    expect(skipRoute(false)).toBe('/onboarding/6');
+  });
+
+  it('jumps signed-in users past the built questions', () => {
+    expect(skipRoute(true)).toBe('/onboarding/4');
   });
 });

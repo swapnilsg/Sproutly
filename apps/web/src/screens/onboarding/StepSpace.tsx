@@ -2,7 +2,13 @@ import { useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { BalconyIcon, CheckIcon, IndoorsIcon, SproutIcon } from '../../components/icons';
 import { track } from '../../lib/analytics';
-import { nextAfter, STEP_DEFAULTS, toggleSpace, type SpaceType } from '../../onboarding/flow';
+import {
+  nextAfter,
+  skipRoute,
+  STEP_DEFAULTS,
+  toggleSpace,
+  type SpaceType,
+} from '../../onboarding/flow';
 import { useAuth } from '../../stores/auth';
 import { useOnboarding } from '../../stores/onboarding';
 import { QuestionLayout } from './QuestionLayout';
@@ -26,11 +32,6 @@ export function StepSpace() {
   const [selected, setSelected] = useState<SpaceType[]>(saved ?? STEP_DEFAULTS.spaceTypes);
   const shownAt = useRef(Date.now());
 
-  function finish(spaceTypes: SpaceType[]) {
-    useOnboarding.getState().setSpaceTypes(spaceTypes);
-    navigate(nextAfter(2, signedIn));
-  }
-
   return (
     <QuestionLayout
       progress={1}
@@ -48,12 +49,14 @@ export function StepSpace() {
             space_types: selected,
             time_on_step: Date.now() - shownAt.current,
           });
-          finish(selected);
+          useOnboarding.getState().setSpaceTypes(selected);
+          navigate(nextAfter(2, signedIn));
         },
       }}
       onSkip={() => {
         track('onboarding_skipped', { step: 2 });
-        finish(saved ?? STEP_DEFAULTS.spaceTypes);
+        useOnboarding.getState().fillDefaults();
+        navigate(skipRoute(signedIn));
       }}
     >
       <div className="choice-list" role="group" aria-labelledby="space-question">

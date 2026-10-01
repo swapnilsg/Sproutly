@@ -5,16 +5,19 @@ North star: *"This is fun and I want to learn more."* Every feature must reduce 
 
 Status: onboarding v2 is being built step by step, one feature branch per step. Built so far:
 - Step 1, Welcome, at `/onboarding/1`.
-- Step 2, "Where will your plants live?", at `/onboarding/2`. It's built on the shared `QuestionLayout` (`src/screens/onboarding/`), which steps 3–5 will reuse.
+- Step 2, "Where will your plants live?", at `/onboarding/2`.
+- Step 3, "How sunny is that spot?", at `/onboarding/3`.
+- Steps 2 and 3 share the `QuestionLayout` (`src/screens/onboarding/`). Single-choice questions use `RadioCardGroup` (`src/components/`).
 - Passwordless sign-up at `/onboarding/6` ("Save your garden") and `/signin` ("Welcome back"). Both use `SignUp` / `VerifyCode` with a `mode` prop (see `apps/web/src/screens/authMode.ts`).
 
-Steps 3–5, 7 and 8 and the dashboard are still placeholders.
+Steps 4, 5, 7 and 8 and the dashboard are still placeholders.
 
 **Interim until those steps exist:**
 - **After a question step:** `nextAfter()` in `apps/web/src/onboarding/flow.ts` picks where to go. Add each new step to `BUILT_QUESTION_STEPS` there.
-  - Guests go from step 2 to `/onboarding/6` (Save your garden).
-  - Signed-in users without a garden go on to the step 3 placeholder.
-- **Answers:** step 2–5 answers live in the onboarding store (`spaceTypes` so far). They survive sign-in; only setup will clear them.
+  - Guests go 2 → 3 → `/onboarding/6` (Save your garden).
+  - Signed-in users without a garden go on to the first unbuilt question's placeholder (step 4).
+  - "Skip for now" uses `skipRoute()`: it fills every unanswered question with its default (`fillDefaults()` in the store) and jumps straight to Save your garden.
+- **Answers:** step 2–5 answers live in the onboarding store (`spaceTypes` and `sunlight` so far). They survive sign-in; only setup will clear them.
 - **Log out:** only on the placeholder screens for now.
 - `NEW_USER_STEP` stays `1` until `POST /onboarding/setup` exists. Setting it to 0 now would send new users back to the guest-only Welcome screen.
 

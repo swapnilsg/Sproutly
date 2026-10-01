@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, latestCode, test, uniqueEmail } from './fixtures';
 
 /**
- * New user: Welcome → "Start my garden" → step 2 (default answer) → Save your garden → email.
+ * New user: Welcome → "Start my garden" → steps 2–3 (default answers) → Save your garden → email.
  * Returning user: Welcome → "I already have an account" → email.
  */
 async function requestCode(page: Page, email: string, entry = 'Start my garden') {
@@ -13,6 +13,8 @@ async function requestCode(page: Page, email: string, entry = 'Start my garden')
   if (entry === 'Start my garden') {
     await expect(page.getByRole('heading', { name: 'Where will your plants live?' })).toBeVisible();
     await page.getByRole('button', { name: 'That’s where they’ll live' }).click();
+    await expect(page.getByRole('heading', { name: 'How sunny is that spot?' })).toBeVisible();
+    await page.getByRole('button', { name: 'Show me plants that fit' }).click();
   }
   await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Continue with email' }).click();
@@ -73,8 +75,8 @@ test('returning user signs back in after logging out', async ({ page, redis }) =
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
   await expect(page).toHaveURL(/\/onboarding\/2$/);
 
-  // Log out lives on the placeholder screens for now; step 3 is the next one.
-  await page.goto('/onboarding/3');
+  // Log out lives on the placeholder screens for now; step 4 is the next one.
+  await page.goto('/onboarding/4');
   await page.getByRole('button', { name: 'Log out' }).click();
   await expect(page).toHaveURL(/\/onboarding\/1$/);
   await page.reload();
@@ -94,7 +96,7 @@ test('"Use a different email" goes back with the field editable', async ({ page 
   await expect(page.getByLabel('Email')).toBeEditable();
 });
 
-test('step 2 answer survives a reload and sign-up', async ({ page, redis }) => {
+test('step 2–3 answers survive a reload and sign-up', async ({ page, redis }) => {
   const email = uniqueEmail('space');
   await page.goto('/onboarding/1');
   await page.getByRole('link', { name: 'Start my garden' }).click();
@@ -106,19 +108,25 @@ test('step 2 answer survives a reload and sign-up', async ({ page, redis }) => {
   await expect(tile(/^Indoors/)).toHaveAttribute('aria-pressed', 'false');
   await expect(tile(/^Balcony/)).toHaveAttribute('aria-pressed', 'false');
   await page.getByRole('button', { name: 'That’s where they’ll live' }).click();
+  await page.getByRole('radio', { name: /^Mostly shade/ }).check();
+  await page.getByRole('button', { name: 'Show me plants that fit' }).click();
   await expect(page).toHaveURL(/\/onboarding\/6$/);
 
+  // Back to step 2 and reload: both answers are still there.
+  await page.goBack();
   await page.goBack();
   await page.reload();
   await expect(tile(/^Not sure yet/)).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'That’s where they’ll live' }).click();
+  await expect(page.getByRole('radio', { name: /^Mostly shade/ })).toBeChecked();
+  await page.getByRole('button', { name: 'Show me plants that fit' }).click();
 
   await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Continue with email' }).click();
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
   await expect(page).toHaveURL(/\/onboarding\/2$/);
   const stored = await page.evaluate(() => localStorage.getItem('sproutly_onboarding_v1'));
-  expect(JSON.parse(stored!).state.spaceTypes).toEqual(['unknown']);
+  expect(JSON.parse(stored!).state).toMatchObject({ spaceTypes: ['unknown'], sunlight: 'shade' });
 });
 
 test('Google sign-in saves the garden', async ({ page }) => {
@@ -155,6 +163,10 @@ test('welcome, sign-up, sign-in and code screens have no accessibility violation
   await expectNoA11yViolations(page);
 
   await page.getByRole('button', { name: 'That’s where they’ll live' }).click();
+  await expect(page.getByRole('heading', { name: 'How sunny is that spot?' })).toBeVisible();
+  await expectNoA11yViolations(page);
+
+  await page.getByRole('button', { name: 'Show me plants that fit' }).click();
   await expect(page.getByRole('heading', { name: 'Your garden is ready 🌱' })).toBeVisible();
   await expectNoA11yViolations(page);
 
@@ -178,6 +190,13 @@ test('sign-up works with the keyboard alone', async ({ page, redis }) => {
     'true',
   );
   await page.getByRole('button', { name: 'That’s where they’ll live' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/onboarding\/3$/);
+  // Arrow keys move the sunlight choice; Enter on the CTA continues.
+  await page.getByRole('radio', { name: /^Not sure/ }).focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(page.getByRole('radio', { name: /^Mostly shade/ })).toBeChecked();
+  await page.getByRole('button', { name: 'Show me plants that fit' }).focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/onboarding\/6$/);
   await page.getByLabel('Email').focus();

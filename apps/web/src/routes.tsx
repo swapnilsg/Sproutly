@@ -3,6 +3,7 @@ import { homeRoute, useAuth } from './stores/auth';
 import { Placeholder } from './screens/Placeholder';
 import { SignUp } from './screens/SignUp';
 import { StepSpace } from './screens/onboarding/StepSpace';
+import { StepSunlight } from './screens/onboarding/StepSunlight';
 import { VerifyCode } from './screens/VerifyCode';
 import { Welcome } from './screens/Welcome';
 
@@ -60,7 +61,10 @@ export const routes: RouteObject[] = [
   { path: '/', element: <RootRedirect /> },
   {
     element: <QuestionStep />,
-    children: [{ path: '/onboarding/2', element: <StepSpace /> }],
+    children: [
+      { path: '/onboarding/2', element: <StepSpace /> },
+      { path: '/onboarding/3', element: <StepSunlight /> },
+    ],
   },
   {
     element: <GuestOnly />,

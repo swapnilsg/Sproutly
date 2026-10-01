@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import type { SpaceType } from '../onboarding/flow';
+import { STEP_DEFAULTS, type SpaceType, type Sunlight } from '../onboarding/flow';
 
 interface OnboardingState {
   /** Email waiting for its sign-in code; survives a refresh on the code screen. */
@@ -12,10 +12,15 @@ interface OnboardingState {
    * null means not answered yet (the screen shows the default).
    */
   spaceTypes: SpaceType[] | null;
+  /** Step 3 answer (same rules as spaceTypes). */
+  sunlight: Sunlight | null;
   setPendingEmail(email: string | null): void;
   /** Records the step 1 start time; returns true only the first time (per onboarding attempt). */
   markStep1Started(): boolean;
   setSpaceTypes(spaceTypes: SpaceType[]): void;
+  setSunlight(sunlight: Sunlight): void;
+  /** "Skip for now": fill every unanswered question with its default. */
+  fillDefaults(): void;
   reset(): void;
 }
 
@@ -25,14 +30,22 @@ export const useOnboarding = create<OnboardingState>()(
       pendingEmail: null,
       step1StartedAt: null,
       spaceTypes: null,
+      sunlight: null,
       setPendingEmail: (pendingEmail) => set({ pendingEmail }),
       setSpaceTypes: (spaceTypes) => set({ spaceTypes }),
+      setSunlight: (sunlight) => set({ sunlight }),
+      fillDefaults: () =>
+        set((s) => ({
+          spaceTypes: s.spaceTypes ?? STEP_DEFAULTS.spaceTypes,
+          sunlight: s.sunlight ?? STEP_DEFAULTS.sunlight,
+        })),
       markStep1Started: () => {
         if (get().step1StartedAt) return false;
         set({ step1StartedAt: Date.now() });
         return true;
       },
-      reset: () => set({ pendingEmail: null, step1StartedAt: null, spaceTypes: null }),
+      reset: () =>
+        set({ pendingEmail: null, step1StartedAt: null, spaceTypes: null, sunlight: null }),
     }),
     {
       name: 'sproutly_onboarding_v1',
