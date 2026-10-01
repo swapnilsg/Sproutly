@@ -9,6 +9,7 @@ export function Button({
   variant = 'primary',
   loading = false,
   disabled,
+  className,
   children,
   ...rest
 }: Props) {
@@ -16,7 +17,7 @@ export function Button({
     <button
       type="button"
       {...rest}
-      className={`btn btn-${variant}`}
+      className={['btn', `btn-${variant}`, className].filter(Boolean).join(' ')}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
     >

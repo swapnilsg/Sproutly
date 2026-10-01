@@ -417,6 +417,205 @@ body {
   outline-offset: 3px;
 }
 
+/* ── Onboarding question steps (2–5) ── */
+.question {
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.question > * {
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+}
+.question-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px 0;
+}
+.question-back,
+.question-back-spacer {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.question-back {
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+}
+.question-back:hover {
+  background: var(--mist-tint);
+}
+.question-body {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 28px 24px 0;
+}
+.question-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.question-title {
+  margin: 0;
+  font: 700 28px/1.2 var(--font-heading);
+}
+.question-sub {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.question-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 24px 28px;
+}
+.question-footer .btn-cta {
+  min-height: 52px;
+  font-size: 16px;
+}
+/* "Nothing chosen yet": a quiet grey button that says what's needed, not a faded green one. */
+.btn-primary:disabled:not([aria-busy]) {
+  background: #e4eae6;
+  color: var(--text-muted);
+  opacity: 1;
+}
+.question-skip {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  font: 14px var(--font-body);
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.question-skip:hover {
+  color: var(--text);
+}
+
+.progress {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.progress-track {
+  flex-grow: 1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.progress-segment {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--morning-mist);
+}
+.progress-segment.is-done {
+  background: var(--sprout-green);
+}
+.progress-segment.is-current {
+  background: var(--leaf-mid);
+}
+.progress-label {
+  min-width: 44px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.choice-tile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 84px;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.choice-tile:hover {
+  border-color: var(--leaf-mid);
+}
+.choice-tile[aria-pressed='true'] {
+  border-color: var(--sprout-green);
+  background: var(--morning-mist);
+}
+.choice-tile-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--mist-tint);
+  color: var(--sprout-green-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.choice-tile[aria-pressed='true'] .choice-tile-icon {
+  background: #fff;
+}
+.choice-tile-text {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.choice-tile-name {
+  font-size: 17px;
+  font-weight: 600;
+}
+.choice-tile-hint {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.choice-tile-check {
+  width: 26px;
+  height: 26px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 2px solid #9aa89e;
+  background: #fff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.choice-tile[aria-pressed='true'] .choice-tile-check {
+  background: var(--sprout-green-dark);
+  border-color: var(--sprout-green-dark);
+}
+
 /* ── Placeholder & splash ── */
 .splash,
 .placeholder {
