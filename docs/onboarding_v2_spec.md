@@ -63,6 +63,9 @@ Steps 1–5 are never recorded on the server; they're guest steps. New accounts 
 - Primary CTA: **"Start my garden"** → `/onboarding/2`
 - Link: "I already have an account" → `/signin`
 - Fine print: "Free · takes about 2 minutes"
+- Two decorative sample task cards between the copy and the CTA (hidden from screen readers), showing what the app does:
+  - "Water your basil · Today · morning" (ticked)
+  - "Move mint into the sun · Today · any time"
 
 **Inputs:** none.
 

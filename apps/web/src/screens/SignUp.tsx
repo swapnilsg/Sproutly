@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/Button';
 import { GOOGLE_CLIENT_ID, GoogleButton } from '../components/GoogleButton';
@@ -8,39 +8,41 @@ import { apiFetch, friendlyError } from '../lib/api';
 import { homeRoute, useAuth, type SessionResponse } from '../stores/auth';
 import { useOnboarding } from '../stores/onboarding';
 import { AuthLayout } from './AuthLayout';
+import { AUTH_MODES, type AuthMode } from './authMode';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Called by both sign-in methods once a session exists. */
-export function useCompleteSignIn() {
+export function useCompleteSignIn(mode: AuthMode) {
   const navigate = useNavigate();
   return (res: SessionResponse, method: 'google' | 'email') => {
     const { step1StartedAt, reset } = useOnboarding.getState();
     useAuth.getState().setSession(res);
-    track('onboarding_step_completed', {
-      step: 1,
-      method,
-      is_new_user: res.is_new_user,
-      time_on_step: step1StartedAt ? Date.now() - step1StartedAt : undefined,
-    });
+    // Saving the garden is onboarding step 6. A returning user signing in completes no step,
+    // unless they turn out to be new.
+    if (mode === 'save' || res.is_new_user) {
+      track('onboarding_step_completed', {
+        step: 6,
+        method,
+        is_new_user: res.is_new_user,
+        time_on_step: step1StartedAt ? Date.now() - step1StartedAt : undefined,
+      });
+    }
     navigate(homeRoute(useAuth.getState().session!), { replace: true });
     reset();
   };
 }
 
-export function SignUp() {
+export function SignUp({ mode }: { mode: AuthMode }) {
   const navigate = useNavigate();
-  const completeSignIn = useCompleteSignIn();
-  const { pendingEmail, setPendingEmail, markStep1Started } = useOnboarding();
+  const completeSignIn = useCompleteSignIn(mode);
+  const { base, title, sub } = AUTH_MODES[mode];
+  const { pendingEmail, setPendingEmail } = useOnboarding();
   const [email, setEmail] = useState(pendingEmail ?? '');
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
-
-  useEffect(() => {
-    if (markStep1Started()) track('onboarding_started');
-  }, [markStep1Started]);
 
   function validate(value: string) {
     return EMAIL_PATTERN.test(value.trim()) ? null : 'Enter a valid email address';
@@ -62,7 +64,7 @@ export function SignUp() {
         auth: false,
       });
       setPendingEmail(normalized);
-      navigate('/onboarding/1/code');
+      navigate(`${base}/code`);
     } catch (err) {
       setFormError(friendlyError(err));
     } finally {
@@ -88,8 +90,8 @@ export function SignUp() {
 
   return (
     <AuthLayout>
-      <h1 className="auth-title">Create your account</h1>
-      <p className="auth-sub">Already growing with us? Same steps — we'll sign you back in.</p>
+      <h1 className="auth-title">{title}</h1>
+      <p className="auth-sub">{sub}</p>
 
       {GOOGLE_CLIENT_ID ? (
         <>

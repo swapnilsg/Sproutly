@@ -2,9 +2,11 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { expect, latestCode, test, uniqueEmail } from './fixtures';
 
-async function requestCode(page: Page, email: string) {
+/** New user: Welcome → "Start my garden" → Save your garden → email. */
+async function requestCode(page: Page, email: string, entry = 'Start my garden') {
   await page.goto('/');
   await expect(page).toHaveURL(/\/onboarding\/1$/);
+  await page.getByRole('link', { name: entry }).click();
   await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Continue with email' }).click();
   await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
@@ -70,7 +72,8 @@ test('returning user signs back in after logging out', async ({ page, redis }) =
   await expect(page).toHaveURL(/\/onboarding\/1$/); // logout really revoked the session
 
   await redis.del(`dev:outbox:${email}`);
-  await requestCode(page, email);
+  await requestCode(page, email, 'I already have an account');
+  await expect(page).toHaveURL(/\/signin\/code$/);
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
   await expect(page).toHaveURL(/\/onboarding\/2$/);
 });
@@ -78,11 +81,11 @@ test('returning user signs back in after logging out', async ({ page, redis }) =
 test('"Use a different email" goes back with the field editable', async ({ page }) => {
   await requestCode(page, uniqueEmail('change'));
   await page.getByRole('button', { name: 'Use a different email' }).click();
-  await expect(page).toHaveURL(/\/onboarding\/1$/);
+  await expect(page).toHaveURL(/\/onboarding\/6$/);
   await expect(page.getByLabel('Email')).toBeEditable();
 });
 
-test('Google sign-in completes step 1', async ({ page }) => {
+test('Google sign-in saves the garden', async ({ page }) => {
   // The backend Google path is covered by API tests; here the token exchange is stubbed.
   await page.route('**/api/v1/auth/google', (route) =>
     route.fulfill({
@@ -95,14 +98,24 @@ test('Google sign-in completes step 1', async ({ page }) => {
       },
     }),
   );
-  await page.goto('/onboarding/1');
+  await page.goto('/onboarding/6');
   await page.getByRole('button', { name: 'Continue with Google' }).click();
   await expect(page).toHaveURL(/\/onboarding\/2$/);
 });
 
-test('sign-up and code screens have no accessibility violations', async ({ page }) => {
+test('welcome, sign-up, sign-in and code screens have no accessibility violations', async ({
+  page,
+}) => {
+  await page.goto('/signin');
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+  await expectNoA11yViolations(page);
+
   await page.goto('/onboarding/1');
-  await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Keep your first plants alive' })).toBeVisible();
+  await expectNoA11yViolations(page);
+
+  await page.getByRole('link', { name: 'Start my garden' }).click();
+  await expect(page.getByRole('heading', { name: 'Your garden is ready 🌱' })).toBeVisible();
   await expectNoA11yViolations(page);
 
   await page.getByLabel('Email').fill(uniqueEmail('a11y'));
@@ -114,6 +127,9 @@ test('sign-up and code screens have no accessibility violations', async ({ page 
 test('sign-up works with the keyboard alone', async ({ page, redis }) => {
   const email = uniqueEmail('keyboard');
   await page.goto('/onboarding/1');
+  await page.getByRole('link', { name: 'Start my garden' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/onboarding\/6$/);
   await page.getByLabel('Email').focus();
   await page.keyboard.type(email);
   await page.keyboard.press('Enter');
