@@ -31,11 +31,12 @@ describe('nextAfter', () => {
   });
 
   it('sends guests to Save your garden after the last built question', () => {
-    expect(nextAfter(3, false)).toBe('/onboarding/6');
+    expect(nextAfter(3, false)).toBe('/onboarding/4');
+    expect(nextAfter(4, false)).toBe('/onboarding/6');
   });
 
   it('sends signed-in users to the first unbuilt question for now', () => {
-    expect(nextAfter(3, true)).toBe('/onboarding/4');
+    expect(nextAfter(4, true)).toBe('/onboarding/5');
   });
 });
 
@@ -45,6 +46,6 @@ describe('skipRoute', () => {
   });
 
   it('jumps signed-in users past the built questions', () => {
-    expect(skipRoute(true)).toBe('/onboarding/4');
+    expect(skipRoute(true)).toBe('/onboarding/5');
   });
 });

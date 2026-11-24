@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { CloudIcon, QuestionIcon, SunCloudIcon, SunIcon } from '../../components/icons';
 import { RadioCardGroup, type RadioCardOption } from '../../components/RadioCardGroup';
 import { track } from '../../lib/analytics';
+import { useCityGuess } from '../../onboarding/cityGuess';
 import { nextAfter, skipRoute, STEP_DEFAULTS, type Sunlight } from '../../onboarding/flow';
 import { useAuth } from '../../stores/auth';
 import { useOnboarding } from '../../stores/onboarding';
@@ -37,6 +38,7 @@ export function StepSunlight() {
   const saved = useOnboarding((s) => s.sunlight);
   const [sunlight, setSunlight] = useState<Sunlight>(saved ?? STEP_DEFAULTS.sunlight);
   const shownAt = useRef(Date.now());
+  useCityGuess();
 
   return (
     <QuestionLayout

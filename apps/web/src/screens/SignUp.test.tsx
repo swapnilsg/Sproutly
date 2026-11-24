@@ -224,7 +224,7 @@ describe('Route guards', () => {
 
   it('sends signed-out visitors to the welcome screen', async () => {
     mockApi({ '/analytics/events': () => ({ status: 202 }) });
-    const router = renderAt('/onboarding/4');
+    const router = renderAt('/onboarding/5');
     await screen.findByRole('heading', { name: 'Keep your first plants alive' });
     expect(router.state.location.pathname).toBe('/onboarding/1');
   });

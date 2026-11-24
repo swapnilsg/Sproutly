@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { syncCatalogue } from '../catalogue/sync.js';
 import { migrate } from '../migrate.js';
 import { TEST_DATABASE_URL } from './config.js';
 
@@ -18,4 +19,5 @@ export default async function setup() {
   await migrate(TEST_DATABASE_URL, 'up');
   await migrate(TEST_DATABASE_URL, 'down', Infinity);
   await migrate(TEST_DATABASE_URL, 'up');
+  await syncCatalogue(TEST_DATABASE_URL);
 }

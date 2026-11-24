@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, latestCode, test, uniqueEmail } from './fixtures';
 
 /**
- * New user: Welcome → "Start my garden" → steps 2–3 (default answers) → Save your garden → email.
+ * New user: Welcome → "Start my garden" → steps 2–4 (default answers) → Save your garden → email.
  * Returning user: Welcome → "I already have an account" → email.
  */
 async function requestCode(page: Page, email: string, entry = 'Start my garden') {
@@ -15,6 +15,8 @@ async function requestCode(page: Page, email: string, entry = 'Start my garden')
     await page.getByRole('button', { name: 'That’s where they’ll live' }).click();
     await expect(page.getByRole('heading', { name: 'How sunny is that spot?' })).toBeVisible();
     await page.getByRole('button', { name: 'Show me plants that fit' }).click();
+    await expect(page.getByRole('heading', { name: 'Start with a bundle?' })).toBeVisible();
+    await page.getByRole('button', { name: 'Add these to my garden' }).click();
   }
   await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Continue with email' }).click();
@@ -75,8 +77,8 @@ test('returning user signs back in after logging out', async ({ page, redis }) =
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
   await expect(page).toHaveURL(/\/onboarding\/2$/);
 
-  // Log out lives on the placeholder screens for now; step 4 is the next one.
-  await page.goto('/onboarding/4');
+  // Log out lives on the placeholder screens for now; step 5 is the next one.
+  await page.goto('/onboarding/5');
   await page.getByRole('button', { name: 'Log out' }).click();
   await expect(page).toHaveURL(/\/onboarding\/1$/);
   await page.reload();
@@ -96,7 +98,7 @@ test('"Use a different email" goes back with the field editable', async ({ page 
   await expect(page.getByLabel('Email')).toBeEditable();
 });
 
-test('step 2–3 answers survive a reload and sign-up', async ({ page, redis }) => {
+test('step 2–4 answers survive a reload and sign-up', async ({ page, redis }) => {
   const email = uniqueEmail('space');
   await page.goto('/onboarding/1');
   await page.getByRole('link', { name: 'Start my garden' }).click();
@@ -110,9 +112,13 @@ test('step 2–3 answers survive a reload and sign-up', async ({ page, redis }) 
   await page.getByRole('button', { name: 'That’s where they’ll live' }).click();
   await page.getByRole('radio', { name: /^Mostly shade/ }).check();
   await page.getByRole('button', { name: 'Show me plants that fit' }).click();
+  // Shade → houseplants recommended; pick it and continue.
+  await expect(page.getByRole('radio', { name: /Beginner houseplants/ })).toBeChecked();
+  await page.getByRole('button', { name: 'Add these to my garden' }).click();
   await expect(page).toHaveURL(/\/onboarding\/6$/);
 
-  // Back to step 2 and reload: both answers are still there.
+  // Back to step 2 and reload: the answers are still there.
+  await page.goBack();
   await page.goBack();
   await page.goBack();
   await page.reload();
@@ -120,13 +126,18 @@ test('step 2–3 answers survive a reload and sign-up', async ({ page, redis }) 
   await page.getByRole('button', { name: 'That’s where they’ll live' }).click();
   await expect(page.getByRole('radio', { name: /^Mostly shade/ })).toBeChecked();
   await page.getByRole('button', { name: 'Show me plants that fit' }).click();
+  await page.getByRole('button', { name: 'Add these to my garden' }).click();
 
   await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Continue with email' }).click();
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
   await expect(page).toHaveURL(/\/onboarding\/2$/);
   const stored = await page.evaluate(() => localStorage.getItem('sproutly_onboarding_v1'));
-  expect(JSON.parse(stored!).state).toMatchObject({ spaceTypes: ['unknown'], sunlight: 'shade' });
+  expect(JSON.parse(stored!).state).toMatchObject({
+    spaceTypes: ['unknown'],
+    sunlight: 'shade',
+    packId: 'houseplants',
+  });
 });
 
 test('Google sign-in saves the garden', async ({ page }) => {
@@ -167,6 +178,13 @@ test('welcome, sign-up, sign-in and code screens have no accessibility violation
   await expectNoA11yViolations(page);
 
   await page.getByRole('button', { name: 'Show me plants that fit' }).click();
+  await expect(page.getByRole('heading', { name: 'Start with a bundle?' })).toBeVisible();
+  await expectNoA11yViolations(page);
+  await page.getByRole('button', { name: 'Choose my own plants' }).click();
+  await expectNoA11yViolations(page);
+  await page.getByRole('button', { name: 'Use a bundle instead' }).click();
+
+  await page.getByRole('button', { name: 'Add these to my garden' }).click();
   await expect(page.getByRole('heading', { name: 'Your garden is ready 🌱' })).toBeVisible();
   await expectNoA11yViolations(page);
 
@@ -197,6 +215,14 @@ test('sign-up works with the keyboard alone', async ({ page, redis }) => {
   await page.keyboard.press('ArrowUp');
   await expect(page.getByRole('radio', { name: /^Mostly shade/ })).toBeChecked();
   await page.getByRole('button', { name: 'Show me plants that fit' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/onboarding\/4$/);
+  // Shade (chosen above) puts houseplants first; arrow keys move the pack choice.
+  await expect(page.getByRole('radio', { name: /Beginner houseplants/ })).toBeChecked();
+  await page.getByRole('radio', { name: /Beginner houseplants/ }).focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('radio', { name: /Easy balcony herbs/ })).toBeChecked();
+  await page.getByRole('button', { name: 'Add these to my garden' }).focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/onboarding\/6$/);
   await page.getByLabel('Email').focus();

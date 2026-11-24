@@ -1,9 +1,13 @@
 /** Onboarding v2 question steps (2–5). See docs/onboarding_v2_spec.md. */
 
-export type SpaceType = 'balcony' | 'indoors' | 'unknown';
-export type Sunlight = 'bright' | 'some' | 'shade' | 'unknown';
+import type { SpaceType, Sunlight } from '@sproutly/catalogue';
 
-/** What "Skip for now" fills in for unanswered questions. Grows as steps 4–5 ship. */
+export type { SpaceType, Sunlight };
+
+/**
+ * What "Skip for now" fills in for unanswered questions. Step 4's default is the
+ * recommended pack (see fillDefaults in the onboarding store). Grows as step 5 ships.
+ */
 export const STEP_DEFAULTS: { spaceTypes: SpaceType[]; sunlight: Sunlight } = {
   spaceTypes: ['balcony'],
   sunlight: 'unknown',
@@ -17,13 +21,13 @@ export function toggleSpace(current: SpaceType[], id: SpaceType): SpaceType[] {
 }
 
 const QUESTION_STEPS = [2, 3, 4, 5];
-/** Question steps that are built, in order. Add 4 and 5 here as they ship. */
-const BUILT_QUESTION_STEPS = [2, 3];
+/** Question steps that are built, in order. Add 5 here when it ships. */
+const BUILT_QUESTION_STEPS = [2, 3, 4];
 const SAVE_GARDEN_ROUTE = '/onboarding/6';
 
 /**
  * Where signed-in users (no garden yet) go once the built questions run out.
- * Interim until steps 4–5 and `POST /onboarding/setup` exist: the first unbuilt question's placeholder.
+ * Interim until step 5 and `POST /onboarding/setup` exist: the first unbuilt question's placeholder.
  */
 function signedInFallback(): string {
   const unbuilt = QUESTION_STEPS.find((s) => !BUILT_QUESTION_STEPS.includes(s)) ?? 5;

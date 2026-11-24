@@ -75,9 +75,9 @@ export function SproutIcon() {
   );
 }
 
-export function SunIcon() {
+export function SunIcon({ size = 26 }: { size?: number }) {
   return (
-    <Icon size={26}>
+    <Icon size={size}>
       <circle cx="12" cy="12" r="4.2" />
       <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" />
     </Icon>
@@ -108,6 +108,15 @@ export function QuestionIcon() {
       <circle cx="12" cy="12" r="9" />
       <path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7" />
       <path d="M12 17.2h.01" />
+    </Icon>
+  );
+}
+
+export function PinIcon() {
+  return (
+    <Icon size={18} strokeWidth={2}>
+      <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" />
+      <circle cx="12" cy="10" r="2.4" />
     </Icon>
   );
 }

@@ -23,6 +23,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@sproutly/catalogue':
+        specifier: workspace:*
+        version: link:../../packages/catalogue
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
@@ -87,6 +90,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@sproutly/catalogue':
+        specifier: workspace:*
+        version: link:../../packages/catalogue
       react:
         specifier: ^19.1.1
         version: 19.3.0
@@ -148,6 +154,18 @@ importers:
       vite:
         specifier: ^7.1.4
         version: 7.3.6(@types/node@22.20.4)(jiti@2.7.0)(tsx@4.23.15)
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@22.20.4)(jiti@2.7.0)(jsdom@26.1.0)(tsx@4.23.15)
+
+  packages/catalogue:
+    devDependencies:
+      '@sproutly/config':
+        specifier: workspace:*
+        version: link:../config
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
       vitest:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@22.20.4)(jiti@2.7.0)(jsdom@26.1.0)(tsx@4.23.15)
