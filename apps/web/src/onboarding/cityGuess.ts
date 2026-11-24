@@ -15,6 +15,9 @@ export function prefetchCityGuess(): Promise<void> {
   })
     .then((guess) => {
       const store = useOnboarding.getState();
+      // The user may have typed or cleared a city while the guess was in flight (that marks
+      // cityGuessed); their answer wins, including "no city".
+      if (store.cityGuessed) return;
       if (guess.city && !store.location) {
         store.setLocation({
           raw: guess.city,

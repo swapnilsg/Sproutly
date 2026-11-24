@@ -14,7 +14,7 @@ import { PinIcon, SunIcon } from '../../components/icons';
 import { RadioCardGroup, type RadioCardOption } from '../../components/RadioCardGroup';
 import { track } from '../../lib/analytics';
 import { useCityGuess } from '../../onboarding/cityGuess';
-import { nextAfter, skipRoute, STEP_DEFAULTS } from '../../onboarding/flow';
+import { answersKey, nextAfter, skipRoute, STEP_DEFAULTS } from '../../onboarding/flow';
 import { useAuth } from '../../stores/auth';
 import { useOnboarding, type GardenLocation } from '../../stores/onboarding';
 import { QuestionLayout } from './QuestionLayout';
@@ -31,7 +31,11 @@ export function StepPack() {
   const [mode, setMode] = useState<'pack' | 'custom'>(
     saved.customPlantIds.length > 0 ? 'custom' : 'pack',
   );
-  const [packId, setPackId] = useState(saved.packId ?? recommended.id);
+  // Reuse a saved pack only if the user picked it for these exact answers. A pack filled in by
+  // "Skip for now", or picked before the space/sunlight answers changed, gives way to a fresh recommendation.
+  const savedPackStillChosen =
+    saved.packId !== null && saved.packChosenFor === answersKey(spaceTypes, sunlight);
+  const [packId, setPackId] = useState(savedPackStillChosen ? saved.packId! : recommended.id);
   const [customIds, setCustomIds] = useState<string[]>(saved.customPlantIds);
   const shownAt = useRef(Date.now());
   useCityGuess();

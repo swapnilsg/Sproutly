@@ -44,6 +44,7 @@ export function renderAt(path: string, session: Session | null = null) {
     sunlight: null,
     packId: null,
     customPlantIds: [],
+    packChosenFor: null,
     location: null,
     cityGuessed: true, // no background city guess in tests unless a test asks for one
   });

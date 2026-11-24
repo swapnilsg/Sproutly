@@ -13,6 +13,14 @@ export const STEP_DEFAULTS: { spaceTypes: SpaceType[]; sunlight: Sunlight } = {
   sunlight: 'unknown',
 };
 
+/**
+ * Identifies a set of step 2–3 answers. A pack chosen on step 4 is only kept while the
+ * answers it was chosen for stay the same; otherwise step 4 recommends afresh.
+ */
+export function answersKey(spaceTypes: SpaceType[], sunlight: Sunlight): string {
+  return `${[...spaceTypes].sort().join(',')}|${sunlight}`;
+}
+
 /** Multi-select with one exclusive option: "Not sure yet" clears the others, and vice versa. */
 export function toggleSpace(current: SpaceType[], id: SpaceType): SpaceType[] {
   if (id === 'unknown') return current.includes('unknown') ? [] : ['unknown'];

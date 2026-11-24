@@ -147,6 +147,62 @@ describe('Step 4 — pick your starter pack', () => {
     expect(useOnboarding.getState().packId).toBe('houseplants');
   });
 
+  it('ignores a pack that "Skip for now" filled in once real answers arrive', async () => {
+    // Skipped on step 2 (herbs filled in), then answered Indoors + Mostly shade.
+    await atStep4({
+      spaceTypes: ['indoors'],
+      sunlight: 'shade',
+      packId: 'herbs',
+      packChosenFor: null,
+    });
+    expect(packRadio(/Beginner houseplants/)).toBeChecked();
+    expect(packRadio(/Easy balcony herbs/)).not.toBeChecked();
+  });
+
+  it('keeps a pack the user chose while their answers stay the same', async () => {
+    await atStep4({
+      spaceTypes: ['balcony'],
+      sunlight: 'bright',
+      packId: 'flowers',
+      packChosenFor: 'balcony|bright',
+    });
+    expect(packRadio(/Balcony flowers/)).toBeChecked();
+  });
+
+  it('recommends afresh after the sunlight answer changes', async () => {
+    // Chose flowers for a bright balcony, went back and changed sunlight to shade.
+    await atStep4({
+      spaceTypes: ['balcony'],
+      sunlight: 'shade',
+      packId: 'flowers',
+      packChosenFor: 'balcony|bright',
+    });
+    expect(packRadio(/Beginner houseplants/)).toBeChecked();
+  });
+
+  it('"Skip for now" replaces a stale skip-filled pack with the current recommendation', async () => {
+    await atStep4({
+      spaceTypes: ['indoors'],
+      sunlight: 'shade',
+      packId: 'herbs',
+      packChosenFor: null,
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }));
+    await screen.findByRole('heading', { name: 'Your garden is ready 🌱' });
+    expect(useOnboarding.getState().packId).toBe('houseplants');
+  });
+
+  it('records which answers a chosen pack belongs to', async () => {
+    await atStep4({ spaceTypes: ['indoors', 'balcony'], sunlight: 'some' });
+    await userEvent.click(packRadio(/Balcony flowers/));
+    await userEvent.click(screen.getByRole('button', { name: 'Add these to my garden' }));
+    await screen.findByRole('heading', { name: 'Your garden is ready 🌱' });
+    expect(useOnboarding.getState()).toMatchObject({
+      packId: 'flowers',
+      packChosenFor: 'balcony,indoors|some',
+    });
+  });
+
   it('goes back to step 3', async () => {
     const { router } = await atStep4();
     await userEvent.click(screen.getByRole('link', { name: 'Back' }));
