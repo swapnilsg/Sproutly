@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router';
 import { CloudIcon, QuestionIcon, SunCloudIcon, SunIcon } from '../../components/icons';
 import { RadioCardGroup, type RadioCardOption } from '../../components/RadioCardGroup';
 import { track } from '../../lib/analytics';
+import { useFinishQuestions } from '../../onboarding/saveGarden';
 import { useCityGuess } from '../../onboarding/cityGuess';
-import { nextAfter, skipRoute, STEP_DEFAULTS, type Sunlight } from '../../onboarding/flow';
-import { useAuth } from '../../stores/auth';
+import { nextAfter, STEP_DEFAULTS, type Sunlight } from '../../onboarding/flow';
 import { useOnboarding } from '../../stores/onboarding';
 import { QuestionLayout } from './QuestionLayout';
 
@@ -34,20 +34,22 @@ const OPTIONS: RadioCardOption<Sunlight>[] = [
 /** Onboarding step 3: how much light the spot gets (replaces the PRD's experience-level screen). */
 export function StepSunlight() {
   const navigate = useNavigate();
-  const signedIn = useAuth((s) => s.session !== null);
   const saved = useOnboarding((s) => s.sunlight);
   const [sunlight, setSunlight] = useState<Sunlight>(saved ?? STEP_DEFAULTS.sunlight);
   const shownAt = useRef(Date.now());
+  const finishQuestions = useFinishQuestions();
   useCityGuess();
 
   return (
     <QuestionLayout
+      error={finishQuestions.error}
       progress={2}
       title="How sunny is that spot?"
       titleId="sunlight-question"
       sub="Your best guess is fine — you can change it later."
       backTo="/onboarding/2"
       cta={{
+        loading: finishQuestions.saving,
         label: 'Show me plants that fit',
         onClick: () => {
           track('onboarding_step_completed', {
@@ -56,13 +58,13 @@ export function StepSunlight() {
             time_on_step: Date.now() - shownAt.current,
           });
           useOnboarding.getState().setSunlight(sunlight);
-          navigate(nextAfter(3, signedIn));
+          navigate(nextAfter(3));
         },
       }}
       onSkip={() => {
         track('onboarding_skipped', { step: 3 });
         useOnboarding.getState().fillDefaults();
-        navigate(skipRoute(signedIn));
+        void finishQuestions.finish();
       }}
     >
       <RadioCardGroup<Sunlight>

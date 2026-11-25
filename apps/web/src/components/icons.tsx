@@ -65,9 +65,9 @@ export function IndoorsIcon() {
   );
 }
 
-export function SproutIcon() {
+export function SproutIcon({ size = 26 }: { size?: number }) {
   return (
-    <Icon size={26}>
+    <Icon size={size}>
       <path d="M12 21v-8" />
       <path d="M12 13c0-4 2.5-6.5 7-6.5 0 4.5-2.5 6.5-7 6.5z" />
       <path d="M12 15.5c0-3-2-5-5.5-5 0 3.5 2 5 5.5 5z" />
@@ -117,6 +117,45 @@ export function PinIcon() {
     <Icon size={18} strokeWidth={2}>
       <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" />
       <circle cx="12" cy="10" r="2.4" />
+    </Icon>
+  );
+}
+
+export function DropIcon() {
+  return (
+    <Icon size={14} strokeWidth={2}>
+      <path d="M12 3.5c3 3.6 5.5 6.6 5.5 9.9a5.5 5.5 0 0 1-11 0C6.5 10.1 9 7.1 12 3.5z" />
+    </Icon>
+  );
+}
+
+export function PencilIcon() {
+  return (
+    <Icon size={15} strokeWidth={2}>
+      <path d="M4 20h4L19 9l-4-4L4 16v4z" />
+      <path d="M13.5 6.5l4 4" />
+    </Icon>
+  );
+}
+
+/** A potted plant: "they're here". */
+export function PotIcon() {
+  return (
+    <Icon size={22}>
+      <path d="M6 13h12l-1.5 7h-9z" />
+      <path d="M12 13V8" />
+      <path d="M12 8c0-2.5 1.8-4 4.5-4 0 2.7-1.8 4-4.5 4z" />
+      <path d="M12 10c0-2-1.5-3.2-3.8-3.2 0 2.2 1.5 3.2 3.8 3.2z" />
+    </Icon>
+  );
+}
+
+/** A shopping bag: "I'm getting them". */
+export function BagIcon() {
+  return (
+    <Icon size={22}>
+      <path d="M5 8h14l-1.2 12H6.2z" />
+      <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
     </Icon>
   );
 }

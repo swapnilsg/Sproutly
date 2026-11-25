@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { homeRoute, useAuth } from '../stores/auth';
 import { useOnboarding } from '../stores/onboarding';
 import { mockApi, renderAt, sessionResponse } from '../test/utils';
 
@@ -84,7 +85,7 @@ describe('Code screen', () => {
     const router = atCodeScreen();
     useOnboarding.setState({ spaceTypes: ['indoors'] });
     await userEvent.type(await screen.findByLabelText('Sign-in code'), '123456');
-    await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding/2'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding/3'));
     expect(useOnboarding.getState().spaceTypes).toEqual(['indoors']);
   });
 
@@ -224,7 +225,7 @@ describe('Route guards', () => {
 
   it('sends signed-out visitors to the welcome screen', async () => {
     mockApi({ '/analytics/events': () => ({ status: 202 }) });
-    const router = renderAt('/onboarding/5');
+    const router = renderAt('/onboarding/7');
     await screen.findByRole('heading', { name: 'Keep your first plants alive' });
     expect(router.state.location.pathname).toBe('/onboarding/1');
   });
@@ -250,5 +251,98 @@ describe('Route guards', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Log out' }));
     await screen.findByRole('heading', { name: 'Keep your first plants alive' });
     expect(calls.some((c) => c.path === '/auth/logout')).toBe(true);
+  });
+});
+
+describe('Signing in hands the answers to the server', () => {
+  const answered = {
+    spaceTypes: ['balcony'] as ['balcony'],
+    sunlight: 'some' as const,
+    packId: 'herbs',
+    packChosenFor: 'balcony|some',
+    plantsOwned: true,
+  };
+
+  /** Renders the code screen with the answers from steps 2–5 already in the store. */
+  async function signInWith(
+    answers: Partial<ReturnType<typeof useOnboarding.getState>>,
+    verify: Record<string, unknown>,
+    setupStatus = 201,
+  ) {
+    const api = mockApi({
+      '/analytics/events': () => ({ status: 202 }),
+      '/auth/email/verify': () => ({ status: 200, body: sessionResponse(verify) }),
+      '/onboarding/setup': () => ({
+        status: setupStatus,
+        body: setupStatus === 201 ? {} : { error: 'internal_error' },
+      }),
+    });
+    const router = renderAt('/onboarding/6');
+    useOnboarding.setState({ ...answers, pendingEmail: 'sam@example.com' } as never);
+    void router.navigate('/onboarding/6/code');
+    await userEvent.type(await screen.findByLabelText('Sign-in code'), '123456');
+    return { ...api, router };
+  }
+
+  it('saves the garden for a new account with every answer, then goes to step 7', async () => {
+    const { calls, router } = await signInWith(answered, { onboarding_step: 0 });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding/7'));
+    const paths = calls.map((c) => c.path);
+    expect(paths.indexOf('/onboarding/setup')).toBeGreaterThan(paths.indexOf('/auth/email/verify'));
+    expect(useAuth.getState().session?.onboardingStep).toBe(6);
+    expect(useOnboarding.getState().packId).toBeNull();
+  });
+
+  it('sends a new account with answers missing back to the first unanswered question', async () => {
+    const { calls, router } = await signInWith(
+      { ...answered, plantsOwned: null },
+      { onboarding_step: 0 },
+    );
+    await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding/5'));
+    expect(calls.some((c) => c.path === '/onboarding/setup')).toBe(false);
+    expect(useOnboarding.getState().packId).toBe('herbs');
+  });
+
+  it('keeps the answers and offers step 5 again if saving fails', async () => {
+    const { router } = await signInWith(answered, { onboarding_step: 0 }, 500);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding/5'));
+    expect(useOnboarding.getState().plantsOwned).toBe(true);
+    expect(await screen.findByRole('button', { name: 'Save my garden' })).toBeEnabled();
+  });
+
+  it('drops answers in this browser when the account already has a garden', async () => {
+    const { calls, router } = await signInWith(answered, {
+      onboarding_step: 6,
+      is_new_user: false,
+    });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding/7'));
+    expect(calls.some((c) => c.path === '/onboarding/setup')).toBe(false);
+    expect(useOnboarding.getState().packId).toBeNull();
+  });
+});
+
+describe('homeRoute', () => {
+  const at = (onboardingStep: number, onboardingDone = false) =>
+    homeRoute({ token: 't', userId: 'u', onboardingStep, onboardingDone });
+
+  it('sends accounts without a garden to their first unanswered question', () => {
+    useOnboarding.getState().reset();
+    expect(at(0)).toBe('/onboarding/2');
+    expect(at(1)).toBe('/onboarding/2');
+    useOnboarding.setState({ spaceTypes: ['indoors'] });
+    expect(at(0)).toBe('/onboarding/3');
+    useOnboarding.setState({ sunlight: 'shade' });
+    expect(at(0)).toBe('/onboarding/4');
+    useOnboarding.setState({ packId: 'houseplants' });
+    expect(at(0)).toBe('/onboarding/5');
+  });
+
+  it('sends accounts with a garden on to reminders, then the first win', () => {
+    expect(at(6)).toBe('/onboarding/7');
+    expect(at(7)).toBe('/onboarding/8');
+  });
+
+  it('sends finished accounts to the dashboard', () => {
+    expect(at(7, true)).toBe('/dashboard');
   });
 });

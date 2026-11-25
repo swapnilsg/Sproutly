@@ -3,15 +3,7 @@ import type pg from 'pg';
 import { z } from 'zod';
 import { inTransaction } from '../db.js';
 import { HttpError } from '../errors.js';
-
-function isTimeZone(tz: string): boolean {
-  try {
-    new Intl.DateTimeFormat('en', { timeZone: tz });
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { isTimeZone, todayIn } from '../time.js';
 
 /** The answers from onboarding steps 2–5, sent once after sign-in. */
 export const setupBody = z
@@ -101,10 +93,7 @@ export function setupGarden(db: pg.Pool, userId: string, body: SetupBody) {
     const ordered = [...plants.rows].sort((a, b) => a.position - b.position);
 
     // Today in the user's timezone, so "today" tasks are due on their today.
-    const today = await c.query<{ today: string }>(
-      'SELECT (NOW() AT TIME ZONE $1)::date AS today',
-      [body.timezone],
-    );
+    const today = todayIn(body.timezone);
     // Owned: check the first plant's soil now (the first win), water the rest today.
     // Not owned yet: pick each plant up first; watering starts once it's home.
     const tasks = ordered.map((gp, i) => ({
@@ -123,7 +112,7 @@ export function setupGarden(db: pg.Pool, userId: string, body: SetupBody) {
        SELECT t.garden_plant_id, t.type, $2::date, t.is_first_task
        FROM jsonb_to_recordset($1::jsonb) AS t(garden_plant_id uuid, type text, is_first_task boolean)
        RETURNING id, garden_plant_id, type, due_date, is_first_task`,
-      [JSON.stringify(tasks), today.rows[0]!.today],
+      [JSON.stringify(tasks), today],
     );
     const first = inserted.rows.find((t) => t.is_first_task)!;
 

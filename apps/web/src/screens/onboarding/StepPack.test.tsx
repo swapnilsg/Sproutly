@@ -48,13 +48,13 @@ describe('Step 4 — pick your starter pack', () => {
     expect(packRadio(/Beginner houseplants/)).not.toHaveAccessibleName(/Needs more sun/);
   });
 
-  it('saves the chosen pack, tracks it and continues to Save your garden', async () => {
+  it('saves the chosen pack, tracks it and continues to step 5', async () => {
     const { calls, router } = await atStep4({ spaceTypes: ['balcony'], sunlight: 'bright' });
     await userEvent.click(packRadio(/Balcony flowers/));
     await userEvent.click(screen.getByRole('button', { name: 'Add these to my garden' }));
 
-    await screen.findByRole('heading', { name: 'Your garden is ready 🌱' });
-    expect(router.state.location.pathname).toBe('/onboarding/6');
+    await screen.findByRole('heading', { name: 'Say hi to your petunias!' });
+    expect(router.state.location.pathname).toBe('/onboarding/5');
     expect(useOnboarding.getState()).toMatchObject({ packId: 'flowers', customPlantIds: [] });
     expect(event(calls, 'starter_pack_selected')).toMatchObject({
       properties: { pack_id: 'flowers', pack_name: 'Balcony flowers', recommended: false },
@@ -86,7 +86,7 @@ describe('Step 4 — pick your starter pack', () => {
     await userEvent.click(boxes[0]!);
 
     await userEvent.click(screen.getByRole('button', { name: 'Add these to my garden' }));
-    await screen.findByRole('heading', { name: 'Your garden is ready 🌱' });
+    await screen.findByRole('heading', { name: /^Say hi to your/ });
     expect(useOnboarding.getState().customPlantIds).toHaveLength(5);
     expect(useOnboarding.getState().packId).toBeNull();
     expect(event(calls, 'starter_pack_selected')).toMatchObject({
@@ -196,7 +196,7 @@ describe('Step 4 — pick your starter pack', () => {
     await atStep4({ spaceTypes: ['indoors', 'balcony'], sunlight: 'some' });
     await userEvent.click(packRadio(/Balcony flowers/));
     await userEvent.click(screen.getByRole('button', { name: 'Add these to my garden' }));
-    await screen.findByRole('heading', { name: 'Your garden is ready 🌱' });
+    await screen.findByRole('heading', { name: /^Say hi to your/ });
     expect(useOnboarding.getState()).toMatchObject({
       packId: 'flowers',
       packChosenFor: 'balcony,indoors|some',

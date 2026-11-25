@@ -192,7 +192,7 @@ Flowers are never the pre-selected default (they need full sun and are less forg
 - CTA: **"Save my garden"** → step 6, or setup directly if already signed in.
 - "Skip for now"
 
-**Default:** **none**. The CTA stays disabled until the user answers. This is a deliberate exception to "every screen has a default": guessing wrong makes day 1 either tell the user to water plants they don't have, or tell them to buy plants they already own. Either breaks trust. (Skip uses "not yet", which is the harmless option.)
+**Default:** **none**. The CTA stays disabled, reading **"Answer above to continue"**, until the user answers. With a single hand-picked plant the question reads "Do you have this plant yet?". This is a deliberate exception to "every screen has a default": guessing wrong makes day 1 either tell the user to water plants they don't have, or tell them to buy plants they already own. Either breaks trust. (Skip uses "not yet", which is the harmless option.)
 
 **Data:**
 - `nickname: string | null` (first plant only)
@@ -302,7 +302,8 @@ Request body:
 **Initial tasks:**
 - **Owned:**
   - "Check if the soil is dry" for the first plant (due today, marked `is_first_task`).
-  - Watering tasks for all plants from today and tomorrow, following each plant's `water_every_days`.
+  - A watering task due today for each of the other plants. Later watering follows each plant's `water_every_days` (scheduled by the reminder work in PR 9).
+- **Dates:** "today" is computed in Node in the user's timezone, never in SQL. Browsers can send legacy zone names like `Asia/Calcutta`, which Postgres doesn't know.
 - **Not owned:**
   - "Pick up your [plant]" for each plant (due today; the first one is `is_first_task`).
   - Watering starts once a plant's buy task is done.

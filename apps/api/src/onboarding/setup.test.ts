@@ -81,6 +81,14 @@ describe('POST /onboarding/setup', () => {
     ]);
   });
 
+  it('accepts legacy timezone names browsers still send (Asia/Calcutta)', async () => {
+    const { token } = await signedIn();
+    const res = await setup(token, { ...answers, timezone: 'Asia/Calcutta' });
+    expect(res.status).toBe(201);
+    const { rows } = await ctx.deps.db.query('SELECT timezone FROM users');
+    expect(rows[0].timezone).toBe('Asia/Calcutta');
+  });
+
   it('plants not owned yet: a "buy" task for each, the first one marked', async () => {
     const { token } = await signedIn();
     const res = await setup(token, { ...answers, plants_owned: false }).expect(201);

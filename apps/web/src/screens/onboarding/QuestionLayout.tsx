@@ -13,7 +13,16 @@ interface Props {
   sub?: string;
   /** Where the back button goes; no back button when null. */
   backTo: string | null;
-  cta: { label: string; onClick(): void; disabled?: boolean; disabledLabel?: string };
+  cta: {
+    label: string;
+    onClick(): void;
+    disabled?: boolean;
+    disabledLabel?: string;
+    /** Saving: spinner on the CTA, skip disabled. */
+    loading?: boolean;
+  };
+  /** Plain-English error shown above the CTA (e.g. saving the garden failed). */
+  error?: string | null;
   onSkip(): void;
   children: ReactNode;
 }
@@ -26,6 +35,7 @@ export function QuestionLayout({
   sub,
   backTo,
   cta,
+  error,
   onSkip,
   children,
 }: Props) {
@@ -53,10 +63,20 @@ export function QuestionLayout({
       </section>
 
       <footer className="question-footer">
-        <Button className="btn-cta" onClick={cta.onClick} disabled={cta.disabled}>
+        {error ? (
+          <p className="form-error question-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <Button
+          className="btn-cta"
+          onClick={cta.onClick}
+          disabled={cta.disabled}
+          loading={cta.loading}
+        >
           {cta.disabled && cta.disabledLabel ? cta.disabledLabel : cta.label}
         </Button>
-        <button type="button" className="question-skip" onClick={onSkip}>
+        <button type="button" className="question-skip" onClick={onSkip} disabled={cta.loading}>
           Skip for now
         </button>
       </footer>

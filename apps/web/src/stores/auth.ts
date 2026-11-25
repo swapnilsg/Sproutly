@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { firstUnansweredStep } from '../onboarding/answers';
+import { useOnboarding } from './onboarding';
 
 export interface Session {
   token: string;
@@ -21,6 +23,8 @@ interface AuthState {
   /** Access token lives in memory only; the refresh token is an httpOnly cookie. */
   session: Session | null;
   setSession(res: SessionResponse): void;
+  /** Records onboarding progress the server has confirmed (only ever moves forward). */
+  setProgress(step: number): void;
   /** Exchanges the refresh cookie for a new access token. Resolves false when signed out. */
   refresh(): Promise<boolean>;
   logout(): Promise<void>;
@@ -31,6 +35,13 @@ let inflightRefresh: Promise<boolean> | null = null;
 export const useAuth = create<AuthState>()((set, get) => ({
   status: 'loading',
   session: null,
+
+  setProgress(step) {
+    const session = get().session;
+    if (session && step > session.onboardingStep) {
+      set({ session: { ...session, onboardingStep: step } });
+    }
+  },
 
   setSession(res) {
     set({
@@ -74,5 +85,9 @@ export const useAuth = create<AuthState>()((set, get) => ({
 /** Where a signed-in user belongs: their next onboarding step, or the dashboard. */
 export function homeRoute(session: Session): string {
   if (session.onboardingDone) return '/dashboard';
+  // No garden yet: resume the questions where this browser's answers stop.
+  if (session.onboardingStep < 6) {
+    return `/onboarding/${firstUnansweredStep(useOnboarding.getState())}`;
+  }
   return `/onboarding/${Math.min(session.onboardingStep + 1, 8)}`;
 }

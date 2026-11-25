@@ -13,16 +13,15 @@ import { useNavigate } from 'react-router';
 import { PinIcon, SunIcon } from '../../components/icons';
 import { RadioCardGroup, type RadioCardOption } from '../../components/RadioCardGroup';
 import { track } from '../../lib/analytics';
+import { useFinishQuestions } from '../../onboarding/saveGarden';
 import { useCityGuess } from '../../onboarding/cityGuess';
-import { answersKey, nextAfter, skipRoute, STEP_DEFAULTS } from '../../onboarding/flow';
-import { useAuth } from '../../stores/auth';
+import { answersKey, nextAfter, STEP_DEFAULTS } from '../../onboarding/flow';
 import { useOnboarding, type GardenLocation } from '../../stores/onboarding';
 import { QuestionLayout } from './QuestionLayout';
 
 /** Onboarding step 4: a starter pack picked for the user's space and light, or up to 5 plants. */
 export function StepPack() {
   const navigate = useNavigate();
-  const signedIn = useAuth((s) => s.session !== null);
   const saved = useOnboarding();
   const spaceTypes = saved.spaceTypes ?? STEP_DEFAULTS.spaceTypes;
   const sunlight = saved.sunlight ?? STEP_DEFAULTS.sunlight;
@@ -38,6 +37,7 @@ export function StepPack() {
   const [packId, setPackId] = useState(savedPackStillChosen ? saved.packId! : recommended.id);
   const [customIds, setCustomIds] = useState<string[]>(saved.customPlantIds);
   const shownAt = useRef(Date.now());
+  const finishQuestions = useFinishQuestions();
   useCityGuess();
 
   const packs = [recommended, ...PACKS.filter((p) => p.id !== recommended.id)];
@@ -77,17 +77,19 @@ export function StepPack() {
       });
     }
     track('onboarding_step_completed', { step: 4, time_on_step: Date.now() - shownAt.current });
-    navigate(nextAfter(4, signedIn));
+    navigate(nextAfter(4));
   }
 
   return (
     <QuestionLayout
+      error={finishQuestions.error}
       progress={3}
       title="Start with a bundle?"
       titleId="pack-question"
       sub="We’ve picked plants that suit your spot — all easy to keep alive."
       backTo="/onboarding/3"
       cta={{
+        loading: finishQuestions.saving,
         label: 'Add these to my garden',
         disabled: mode === 'custom' && customIds.length === 0,
         disabledLabel: 'Pick at least one plant',
@@ -96,7 +98,7 @@ export function StepPack() {
       onSkip={() => {
         track('onboarding_skipped', { step: 4 });
         useOnboarding.getState().fillDefaults();
-        navigate(skipRoute(signedIn));
+        void finishQuestions.finish();
       }}
     >
       <LocationChip />

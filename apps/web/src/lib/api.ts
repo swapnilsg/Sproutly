@@ -15,12 +15,14 @@ interface Options {
   body?: unknown;
   /** Attach the access token and transparently refresh it once on expiry. Default true. */
   auth?: boolean;
+  /** Use this access token instead of the stored session's (e.g. just before the session is set). */
+  token?: string;
 }
 
-async function send(path: string, { method = 'GET', body, auth = true }: Options) {
+async function send(path: string, { method = 'GET', body, auth = true, token: explicit }: Options) {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  const token = useAuth.getState().session?.token;
+  const token = explicit ?? useAuth.getState().session?.token;
   if (auth && token) headers.Authorization = `Bearer ${token}`;
 
   return fetch(`/api/v1${path}`, {

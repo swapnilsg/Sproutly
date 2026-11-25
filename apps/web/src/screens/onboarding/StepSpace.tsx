@@ -2,14 +2,9 @@ import { useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { BalconyIcon, CheckIcon, IndoorsIcon, SproutIcon } from '../../components/icons';
 import { track } from '../../lib/analytics';
+import { useFinishQuestions } from '../../onboarding/saveGarden';
 import { useCityGuess } from '../../onboarding/cityGuess';
-import {
-  nextAfter,
-  skipRoute,
-  STEP_DEFAULTS,
-  toggleSpace,
-  type SpaceType,
-} from '../../onboarding/flow';
+import { nextAfter, STEP_DEFAULTS, toggleSpace, type SpaceType } from '../../onboarding/flow';
 import { useAuth } from '../../stores/auth';
 import { useOnboarding } from '../../stores/onboarding';
 import { QuestionLayout } from './QuestionLayout';
@@ -32,16 +27,19 @@ export function StepSpace() {
   const saved = useOnboarding((s) => s.spaceTypes);
   const [selected, setSelected] = useState<SpaceType[]>(saved ?? STEP_DEFAULTS.spaceTypes);
   const shownAt = useRef(Date.now());
+  const finishQuestions = useFinishQuestions();
   useCityGuess();
 
   return (
     <QuestionLayout
+      error={finishQuestions.error}
       progress={1}
       title="Where will your plants live?"
       titleId="space-question"
       sub="Pick all that apply."
       backTo={signedIn ? null : '/onboarding/1'}
       cta={{
+        loading: finishQuestions.saving,
         label: 'That’s where they’ll live',
         disabled: selected.length === 0,
         disabledLabel: 'Pick at least one place',
@@ -52,13 +50,13 @@ export function StepSpace() {
             time_on_step: Date.now() - shownAt.current,
           });
           useOnboarding.getState().setSpaceTypes(selected);
-          navigate(nextAfter(2, signedIn));
+          navigate(nextAfter(2));
         },
       }}
       onSkip={() => {
         track('onboarding_skipped', { step: 2 });
         useOnboarding.getState().fillDefaults();
-        navigate(skipRoute(signedIn));
+        void finishQuestions.finish();
       }}
     >
       <div className="choice-list" role="group" aria-labelledby="space-question">
