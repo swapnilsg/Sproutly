@@ -57,10 +57,35 @@ async function gardenFor(email: string) {
   }
 }
 
-/** After sign-up the garden is saved and the user moves on to reminders (still a placeholder). */
+/** After sign-up the garden is saved and the user moves on to reminders (step 7). */
 async function expectOnStep7(page: Page) {
   await expect(page).toHaveURL(/\/onboarding\/7$/);
-  await expect(page.getByRole('heading', { name: 'Onboarding step 7' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Never forget to water again' })).toBeVisible();
+}
+
+/** Finishes step 7 with "Maybe later" and lands on step 8 (still a placeholder, with Log out). */
+async function skipReminders(page: Page) {
+  await page.getByRole('button', { name: 'Maybe later' }).click();
+  await expect(page).toHaveURL(/\/onboarding\/8$/);
+}
+
+/** One user's reminder settings and push subscriptions, straight from the E2E database. */
+async function remindersFor(email: string) {
+  const db = new pg.Client({ connectionString: E2E.databaseUrl });
+  await db.connect();
+  try {
+    const { rows } = await db.query(
+      `SELECT to_char(u.reminder_time, 'HH24:MI') AS reminder_time, u.notif_permission,
+              u.onboarding_step, count(s.id)::int AS subscriptions
+       FROM users u LEFT JOIN push_subscriptions s ON s.user_id = u.id
+       WHERE u.email = $1
+       GROUP BY u.id`,
+      [email],
+    );
+    return rows[0];
+  } finally {
+    await db.end();
+  }
 }
 
 async function expectNoA11yViolations(page: Page) {
@@ -158,7 +183,8 @@ test('returning user signs back in after logging out', async ({ page, redis }) =
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
   await expectOnStep7(page);
 
-  // Log out lives on the placeholder screens for now (step 7 is one).
+  // Log out lives on the placeholder screens for now (step 8 is one).
+  await skipReminders(page);
   await page.getByRole('button', { name: 'Log out' }).click();
   await expect(page).toHaveURL(/\/onboarding\/1$/);
   await page.reload();
@@ -168,7 +194,7 @@ test('returning user signs back in after logging out', async ({ page, redis }) =
   await requestCode(page, email, 'I already have an account');
   await expect(page).toHaveURL(/\/signin\/code$/);
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
-  await expectOnStep7(page);
+  await expect(page).toHaveURL(/\/onboarding\/8$/); // picks up where they left off
 });
 
 test('a returning user who answers the questions again keeps their original garden', async ({
@@ -179,13 +205,14 @@ test('a returning user who answers the questions again keeps their original gard
   await requestCode(page, email);
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
   await expectOnStep7(page);
+  await skipReminders(page);
   await page.getByRole('button', { name: 'Log out' }).click();
 
   // Same person, new answers (plants not owned this time), same email.
   await redis.del(`dev:outbox:${email}`);
   await requestCode(page, email, 'Start my garden', { owned: false });
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
-  await expectOnStep7(page);
+  await expect(page).toHaveURL(/\/onboarding\/8$/);
   const garden = await gardenFor(email);
   expect(garden.map((r) => r.type)).toEqual(['check_soil', 'water', 'water']);
 });
@@ -358,4 +385,90 @@ test('sign-up works with the keyboard alone', async ({ page, redis }) => {
   await expect(page.getByLabel('Sign-in code')).toBeFocused();
   await page.keyboard.type(await latestCode(redis, email));
   await expectOnStep7(page);
+});
+
+test.describe('step 7 — reminders', () => {
+  async function signUpTo7(page: Page, redis: Parameters<typeof latestCode>[0], label: string) {
+    const email = uniqueEmail(label);
+    await requestCode(page, email);
+    await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
+    await expectOnStep7(page);
+    return email;
+  }
+
+  test('turning on reminders stores the time and this browser’s subscription', async ({
+    page,
+    redis,
+    context,
+  }) => {
+    // Headless Chromium has no push service, so stand in for pushManager.subscribe.
+    await context.grantPermissions(['notifications']);
+    await page.addInitScript(() => {
+      PushManager.prototype.subscribe = async function () {
+        return {
+          toJSON: () => ({
+            endpoint: `https://push.example.com/send/${Math.random().toString(36).slice(2)}`,
+            keys: { p256dh: 'BOr1gK8x_3vQ', auth: 'tBHItJI5svbpez7KI4CCXg' },
+          }),
+        } as unknown as PushSubscription;
+      };
+    });
+    const email = await signUpTo7(page, redis, 'push');
+    await expect(page.getByText('Time to water your basil')).toBeVisible();
+    await page.getByLabel('Remind me every day at').fill('07:30');
+    await page.getByRole('button', { name: 'Turn on reminders' }).click();
+    await expect(page).toHaveURL(/\/onboarding\/8$/);
+    expect(await remindersFor(email)).toEqual({
+      reminder_time: '07:30',
+      notif_permission: 'granted',
+      onboarding_step: 7,
+      subscriptions: 1,
+    });
+  });
+
+  test('"Maybe later" keeps going without asking the browser', async ({ page, redis }) => {
+    const email = await signUpTo7(page, redis, 'later');
+    await skipReminders(page);
+    expect(await remindersFor(email)).toMatchObject({
+      reminder_time: '08:00',
+      notif_permission: 'not_asked',
+      onboarding_step: 7,
+      subscriptions: 0,
+    });
+  });
+
+  test('browsers without push get in-app reminders instead', async ({ page, redis }) => {
+    await page.addInitScript(() => {
+      delete (window as { PushManager?: unknown }).PushManager;
+    });
+    const email = await signUpTo7(page, redis, 'nopush');
+    await expect(
+      page.getByText(
+        'Your browser can’t show notifications, so we’ll remind you in the app instead.',
+      ),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Sounds good' }).click();
+    await expect(page).toHaveURL(/\/onboarding\/8$/);
+    expect(await remindersFor(email)).toMatchObject({ notif_permission: 'unsupported' });
+  });
+
+  test('step 7 has no accessibility violations and works with the keyboard', async ({
+    page,
+    redis,
+  }) => {
+    const email = await signUpTo7(page, redis, 'a11y7');
+    await expectNoA11yViolations(page);
+    // The native time field has hour/minute/AM-PM segments; Tab walks them, then leaves.
+    await page.getByLabel('Remind me every day at').focus();
+    const cta = page.getByRole('button', { name: 'Turn on reminders' });
+    for (let i = 0; i < 5 && !(await cta.evaluate((el) => el === document.activeElement)); i++) {
+      await page.keyboard.press('Tab');
+    }
+    await expect(cta).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: 'Maybe later' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/\/onboarding\/8$/);
+    expect(await remindersFor(email)).toMatchObject({ onboarding_step: 7 });
+  });
 });

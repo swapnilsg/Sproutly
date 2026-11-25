@@ -35,6 +35,10 @@ export default defineConfig({
         // Configured so the Google route is live; the browser-side GIS script is stubbed.
         GOOGLE_CLIENT_ID: 'e2e-google-client-id',
         EMAIL_API_KEY: '',
+        // Test-only VAPID pair (not a secret): lets E2E exercise the push path on step 7.
+        VAPID_PUBLIC_KEY:
+          'BCNdDUnZS9DBOkxSX2gzqExLXIvqGwjUy6GluZks50TXzJOW0c-I47loNceZNKc9HS1vmlsfM_tme3OosXsFZJM',
+        VAPID_PRIVATE_KEY: 'XM9aZrGfkFiIMpGbG8BNnZYRdI71nKyZZe7FwcNAl_s',
       },
     },
     {

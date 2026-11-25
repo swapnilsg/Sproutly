@@ -159,3 +159,30 @@ export function BagIcon() {
     </Icon>
   );
 }
+
+export function BellIcon() {
+  return (
+    <Icon size={40} strokeWidth={1.7}>
+      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
+      <path d="M10 20.5a2 2 0 0 0 4 0" />
+    </Icon>
+  );
+}
+
+export function ClockIcon() {
+  return (
+    <Icon size={20}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </Icon>
+  );
+}
+
+export function InfoIcon() {
+  return (
+    <Icon size={22}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5.5M12 7.6h.01" />
+    </Icon>
+  );
+}

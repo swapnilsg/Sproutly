@@ -152,6 +152,16 @@ describe('POST /onboarding/reminders', () => {
   });
 });
 
+describe('GET /users/me/onboarding-state', () => {
+  it('names the garden’s first plant once the garden is saved', async () => {
+    const token = await withGarden();
+    const res = await request(ctx.app)
+      .get('/api/v1/users/me/onboarding-state')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.body.first_plant_name).toBe('Basil');
+  });
+});
+
 describe('GET /notifications/config', () => {
   it('has no public key while push is not configured', async () => {
     const res = await request(ctx.app).get('/api/v1/notifications/config');
