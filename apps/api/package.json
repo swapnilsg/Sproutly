@@ -10,7 +10,8 @@
     "migrate": "tsx --conditions=source src/migrate.ts up",
     "migrate:down": "tsx --conditions=source src/migrate.ts down",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "vapid:keys": "tsx src/scripts/vapidKeys.ts"
   },
   "dependencies": {
     "@sproutly/catalogue": "workspace:*",

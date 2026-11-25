@@ -29,6 +29,10 @@ export default tseslint.config(
     rules: reactHooks.configs.recommended.rules,
   },
   {
+    files: ['apps/web/public/sw.js'],
+    languageOptions: { globals: globals.serviceworker },
+  },
+  {
     // Playwright config and specs run in Node.
     files: ['apps/web/e2e/**/*.ts', 'apps/web/*.config.ts'],
     languageOptions: { globals: globals.node },

@@ -7,5 +7,5 @@
     "noEmit": true,
     "customConditions": ["source"]
   },
-  "include": ["src", "e2e", "vite.config.ts", "playwright.config.ts"]
+  "include": ["src", "e2e", "public/**/*.ts", "vite.config.ts", "playwright.config.ts"]
 }

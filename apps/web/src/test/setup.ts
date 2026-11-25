@@ -16,5 +16,5 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
-  localStorage.clear();
+  globalThis.localStorage?.clear(); // absent in node-environment tests (public/sw.test.ts)
 });

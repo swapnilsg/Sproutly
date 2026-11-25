@@ -35,6 +35,17 @@ export const test = base.extend<{ redis: Redis; page: Page }>({
     await page.route('https://accounts.google.com/gsi/client', (route) =>
       route.fulfill({ contentType: 'text/javascript', body: FAKE_GIS }),
     );
+    // Headless Chromium always reports Notification.permission as "denied" (requestPermission
+    // still honours context.grantPermissions). Model a real browser that was never asked.
+    await page.addInitScript(() => {
+      // Tests that need another state add their own init script, which runs after this one.
+      if ('Notification' in window) {
+        Object.defineProperty(Notification, 'permission', {
+          configurable: true,
+          get: () => 'default',
+        });
+      }
+    });
     await use(page);
   },
 });

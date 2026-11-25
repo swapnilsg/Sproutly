@@ -8,8 +8,9 @@ Status: onboarding v2 is being built step by step, one feature branch per step. 
   - The questions share `QuestionLayout` (`src/screens/onboarding/`). Single-choice questions use `RadioCardGroup` (`src/components/`).
 - Passwordless sign-up at `/onboarding/6` ("Save your garden") and `/signin` ("Welcome back"). Both use `SignUp` / `VerifyCode` with a `mode` prop (see `apps/web/src/screens/authMode.ts`).
 - **Garden setup:** after sign-up, the answers are saved by `POST /onboarding/setup`, which creates the garden, its plants and the first tasks.
+- Step 7, reminders, at `/onboarding/7`: a daily time plus notification permission, saved with `POST /onboarding/reminders`. A browser that allows notifications also saves a push subscription. Browsers without Web Push, or a server without VAPID keys, get in-app reminders instead. **Sending** reminders comes with the worker (PR 9).
 
-Steps 7 and 8 and the dashboard are still placeholders. Log out only exists on those placeholder screens for now.
+Step 8 and the dashboard are still placeholders. Log out only exists on those placeholder screens for now.
 
 **How the question flow works** (`apps/web/src/onboarding/`):
 - **Order:** `nextAfter()` (`flow.ts`) steps through 2 → 3 → 4 → 5.
@@ -43,7 +44,10 @@ docker-compose.yml  postgres:16 (sproutly/sproutly, db sproutly) + redis:7
   - `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm format`
   - `pnpm test:e2e` (Playwright, desktop + Pixel 7; starts its own API on :4100 and web on :3100)
   - `docker compose up -d`, then `pnpm --filter @sproutly/api migrate` (runs migrations, then syncs the catalogue into Postgres)
-- **Local config:** copy `apps/api/.env.example` to `apps/api/.env` and fill in the two secrets. Sign-in codes print in the API console.
+- **Local config:**
+  - Copy `apps/api/.env.example` to `apps/api/.env` and fill in the two secrets. Sign-in codes print in the API console.
+  - For push on step 7, also add `pnpm --filter @sproutly/api vapid:keys` output to `.env`.
+  - The E2E config carries its own test-only VAPID pair.
 - **Tests:**
   - API: Vitest + Supertest against `createApp(deps)`. `src/test/helpers.ts` builds deps with a recording email sender and a mocked Google verifier. The test DB `sproutly_test` is recreated each run; Redis db 1.
   - Web: Testing Library + jsdom, with `mockApi()` in `src/test/utils.tsx`.
@@ -211,7 +215,7 @@ Full detail is in `docs/onboarding_v2_spec.md`. There are 8 screens: 5 quick tap
 - **Tests:**
   - Playwright E2E on every PR, covering the happy, skip, OAuth, resume and notification-denied paths.
   - Vitest + Supertest for the API against real Postgres/Redis, with 90% coverage on auth and onboarding routes.
-- **Env vars:** `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `OTP_SECRET`, `GOOGLE_CLIENT_ID`, `EMAIL_API_KEY`, `EMAIL_FROM`, `VAPID_PRIVATE_KEY`, `GEOCODING_API_KEY`.
+- **Env vars:** `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `OTP_SECRET`, `GOOGLE_CLIENT_ID`, `EMAIL_API_KEY`, `EMAIL_FROM`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `GEOCODING_API_KEY`.
 
 ### Constraints
 - Each screen renders in < 1s, with no blocking API call on step transitions.
@@ -234,11 +238,13 @@ Full detail is in `docs/onboarding_v2_spec.md`. There are 8 screens: 5 quick tap
   - `gardens` (one per user)
   - `garden_plants` (`owned`, `nickname`, `position`)
   - `tasks` (`water` / `check_soil` / `buy`, `due_date`, `is_first_task`, `completed_at`)
+  - `push_subscriptions` (one row per browser, unique `endpoint`)
+  - `users.notif_prompted_at` (starts the 7-day re-prompt clock); `notif_permission` is `not_asked` / `granted` / `denied` / `unsupported`
 - **Timezones:**
   - Compute dates in Node with `todayIn()` (`apps/api/src/time.ts`), **never in SQL**.
   - Browsers send legacy names like `Asia/Calcutta`, which Node accepts but Postgres doesn't.
   - DATE columns come back as `'YYYY-MM-DD'` strings (`src/db.ts`).
-- **Still to specify:** `push_subscriptions`, `tips`.
+- **Still to specify:** `tips`.
 
 ### API
 - **Built (auth):**
@@ -248,6 +254,8 @@ Full detail is in `docs/onboarding_v2_spec.md`. There are 8 screens: 5 quick tap
   - `GET /users/me/onboarding-state`
   - `POST /analytics/events`
   - `GET /geo/guess` (public; city and country from Cloudflare's `cf-ipcity` / `cf-ipcountry`, otherwise `{city: null}`)
+  - `GET /notifications/config` (public): `{vapid_public_key}`, or null when push isn't configured
+  - `POST /onboarding/reminders` (auth): `reminder_time` on the quarter hour, `timezone`, `permission` (granted / denied / later / unsupported), and `subscription` when granted. Subscriptions are upserted by endpoint. Completes step 7; returns 409 `garden_required` before setup.
   - `POST /onboarding/setup` (auth): saves the step 2–5 answers and creates the garden, plants and first tasks. 409 `garden_exists` on a second call.
 - **Specified, not built:**
   - `PATCH /users/me/reminders`, `PATCH /users/me/onboarding`

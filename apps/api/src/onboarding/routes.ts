@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../auth/middleware.js';
 import type { Deps } from '../deps.js';
 import { parseBody } from '../validate.js';
+import { remindersBody, saveReminders } from './reminders.js';
 import { setupBody, setupGarden } from './setup.js';
 
 export function onboardingRoutes(deps: Deps): Router {
@@ -12,6 +13,12 @@ export function onboardingRoutes(deps: Deps): Router {
     const body = parseBody(setupBody, req);
     const result = await setupGarden(deps.db, res.locals.userId, body);
     res.status(201).json(result);
+  });
+
+  // Step 7: reminder time and notification permission (+ the push subscription when allowed).
+  router.post('/reminders', requireAuth(deps.env.JWT_SECRET), async (req, res) => {
+    const body = parseBody(remindersBody, req);
+    res.json(await saveReminders(deps.db, res.locals.userId, body, req.get('user-agent')));
   });
 
   return router;

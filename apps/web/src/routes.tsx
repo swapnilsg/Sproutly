@@ -4,6 +4,7 @@ import { Placeholder } from './screens/Placeholder';
 import { SignUp } from './screens/SignUp';
 import { StepMeetPlant } from './screens/onboarding/StepMeetPlant';
 import { StepPack } from './screens/onboarding/StepPack';
+import { StepReminders } from './screens/onboarding/StepReminders';
 import { StepSpace } from './screens/onboarding/StepSpace';
 import { StepSunlight } from './screens/onboarding/StepSunlight';
 import { VerifyCode } from './screens/VerifyCode';
@@ -40,7 +41,7 @@ function RequireAuth() {
   return <Outlet />;
 }
 
-/** Placeholders for the unbuilt steps 7–8; they can't be reached before the garden is saved. */
+/** Placeholder for the unbuilt step 8; it can't be reached before step 7 is done. */
 function OnboardingStep() {
   const session = useAuth((s) => s.session)!;
   const step = Number(useParams().step);
@@ -50,6 +51,14 @@ function OnboardingStep() {
     return <Navigate to={homeRoute(session)} replace />;
   }
   return <Placeholder title={`Onboarding step ${step}`} />;
+}
+
+/** Steps after the garden is saved (7, and soon 8): only once setup has happened. */
+function AfterGarden() {
+  const session = useAuth((s) => s.session)!;
+  if (session.onboardingDone) return <Navigate to="/dashboard" replace />;
+  if (session.onboardingStep < 6) return <Navigate to={homeRoute(session)} replace />;
+  return <Outlet />;
 }
 
 function RootRedirect() {
@@ -82,6 +91,10 @@ export const routes: RouteObject[] = [
   {
     element: <RequireAuth />,
     children: [
+      {
+        element: <AfterGarden />,
+        children: [{ path: '/onboarding/7', element: <StepReminders /> }],
+      },
       { path: '/onboarding/:step', element: <OnboardingStep /> },
       { path: '/dashboard', element: <Placeholder title="Dashboard" /> },
     ],

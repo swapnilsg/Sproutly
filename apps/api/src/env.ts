@@ -14,6 +14,10 @@ const schema = z.object({
   GOOGLE_CLIENT_ID: optional,
   EMAIL_API_KEY: optional,
   EMAIL_FROM: z.string().default('Sproutly <hello@sproutly.app>'),
+  // Web Push (VAPID). Push stays switched off until both keys are set: `pnpm vapid:keys`.
+  VAPID_PUBLIC_KEY: optional,
+  VAPID_PRIVATE_KEY: optional,
+  VAPID_SUBJECT: z.string().default('mailto:hello@sproutly.app'),
 });
 
 export type Env = z.infer<typeof schema>;

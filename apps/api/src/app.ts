@@ -6,6 +6,7 @@ import { authRoutes } from './auth/routes.js';
 import type { Deps } from './deps.js';
 import { errorHandler, HttpError } from './errors.js';
 import { geoRoutes } from './geo/routes.js';
+import { notificationRoutes } from './notifications/routes.js';
 import { onboardingRoutes } from './onboarding/routes.js';
 import { userRoutes } from './users/routes.js';
 
@@ -27,6 +28,7 @@ export function createApp(deps: Deps) {
   api.use('/analytics', analyticsRoutes(deps));
   api.use('/geo', geoRoutes());
   api.use('/onboarding', onboardingRoutes(deps));
+  api.use('/notifications', notificationRoutes(deps));
   app.use('/api/v1', api);
 
   app.use(() => {
