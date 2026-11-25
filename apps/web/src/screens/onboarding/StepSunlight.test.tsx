@@ -24,14 +24,14 @@ describe('Step 3 — how sunny is that spot?', () => {
     expect(screen.getByText('2 of 5')).toBeVisible();
   });
 
-  it('saves the choice, tracks it and continues to Save your garden', async () => {
+  it('saves the choice, tracks it and continues to step 4', async () => {
     const { calls, router } = await atStep3();
     await userEvent.click(screen.getByRole('radio', { name: /^Bright sun/ }));
     expect(screen.getByRole('radio', { name: /^Bright sun/ })).toBeChecked();
     await userEvent.click(screen.getByRole('button', { name: 'Show me plants that fit' }));
 
-    await screen.findByRole('heading', { name: 'Your garden is ready 🌱' });
-    expect(router.state.location.pathname).toBe('/onboarding/6');
+    await screen.findByRole('heading', { name: 'Start with a bundle?' });
+    expect(router.state.location.pathname).toBe('/onboarding/4');
     expect(useOnboarding.getState().sunlight).toBe('bright');
     expect(event(calls, 'onboarding_step_completed')).toMatchObject({
       properties: { step: 3, sunlight: 'bright' },
@@ -86,7 +86,7 @@ describe('Step 3 — how sunny is that spot?', () => {
       onboardingDone: false,
     });
     await userEvent.click(screen.getByRole('button', { name: 'Show me plants that fit' }));
-    await screen.findByRole('heading', { name: 'Onboarding step 4' });
+    await screen.findByRole('heading', { name: 'Start with a bundle?' });
     expect(router.state.location.pathname).toBe('/onboarding/4');
   });
 });

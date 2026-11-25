@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { runner } from 'node-pg-migrate';
+import { syncCatalogue } from './catalogue/sync.js';
 
 export const migrationsDir = path.resolve(import.meta.dirname, '../migrations');
 
@@ -29,5 +30,6 @@ if (process.argv[1] === import.meta.filename) {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL is not set');
   await migrate(url, direction);
+  if (direction === 'up') await syncCatalogue(url);
   console.log(`Migrations ${direction} complete`);
 }

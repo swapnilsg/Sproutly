@@ -4,15 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --conditions=source src/index.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
-    "migrate": "tsx src/migrate.ts up",
-    "migrate:down": "tsx src/migrate.ts down",
+    "migrate": "tsx --conditions=source src/migrate.ts up",
+    "migrate:down": "tsx --conditions=source src/migrate.ts down",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@sproutly/catalogue": "workspace:*",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^5.1.0",

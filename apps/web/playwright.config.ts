@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'pnpm --filter @sproutly/api exec tsx src/index.ts',
+      command: 'pnpm --filter @sproutly/api exec tsx --conditions=source src/index.ts',
       url: `http://localhost:${E2E.apiPort}/api/v1/health`,
       reuseExistingServer: false,
       env: {

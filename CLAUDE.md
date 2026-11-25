@@ -7,17 +7,18 @@ Status: onboarding v2 is being built step by step, one feature branch per step. 
 - Step 1, Welcome, at `/onboarding/1`.
 - Step 2, "Where will your plants live?", at `/onboarding/2`.
 - Step 3, "How sunny is that spot?", at `/onboarding/3`.
+- Step 4, "Start with a bundle?" (starter pack, optional city, "Choose my own plants"), at `/onboarding/4`.
 - Steps 2 and 3 share the `QuestionLayout` (`src/screens/onboarding/`). Single-choice questions use `RadioCardGroup` (`src/components/`).
 - Passwordless sign-up at `/onboarding/6` ("Save your garden") and `/signin` ("Welcome back"). Both use `SignUp` / `VerifyCode` with a `mode` prop (see `apps/web/src/screens/authMode.ts`).
 
-Steps 4, 5, 7 and 8 and the dashboard are still placeholders.
+Steps 5, 7 and 8 and the dashboard are still placeholders.
 
 **Interim until those steps exist:**
 - **After a question step:** `nextAfter()` in `apps/web/src/onboarding/flow.ts` picks where to go. Add each new step to `BUILT_QUESTION_STEPS` there.
   - Guests go 2 → 3 → `/onboarding/6` (Save your garden).
-  - Signed-in users without a garden go on to the first unbuilt question's placeholder (step 4).
+  - Signed-in users without a garden go on to the first unbuilt question's placeholder (step 5).
   - "Skip for now" uses `skipRoute()`: it fills every unanswered question with its default (`fillDefaults()` in the store) and jumps straight to Save your garden.
-- **Answers:** step 2–5 answers live in the onboarding store (`spaceTypes` and `sunlight` so far). They survive sign-in; only setup will clear them.
+- **Answers:** step 2–5 answers live in the onboarding store (`spaceTypes`, `sunlight`, `packId` or `customPlantIds`, and `location`). They survive sign-in; only setup will clear them.
 - **Log out:** only on the placeholder screens for now.
 - `NEW_USER_STEP` stays `1` until `POST /onboarding/setup` exists. Setting it to 0 now would send new users back to the guest-only Welcome screen.
 
@@ -30,6 +31,7 @@ The product name **Sproutly is final**.
 apps/web/         React + Vite + TS + Zustand (dev server :3000, proxies /api → :4000)
 apps/api/         Express 5 + TS (tsx watch in dev, tsc build), :4000; app in src/app.ts, listener in src/index.ts
 packages/config/  shared tsconfig.base.json + ESLint flat config (@sproutly/config)
+packages/catalogue/  plants, starter packs and pack rules (@sproutly/catalogue), shared by web and API
 docs/             planning & design reference files (below)
 docker-compose.yml  postgres:16 (sproutly/sproutly, db sproutly) + redis:7
 ```
@@ -39,7 +41,7 @@ docker-compose.yml  postgres:16 (sproutly/sproutly, db sproutly) + redis:7
   - `pnpm dev` (web + api)
   - `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm format`
   - `pnpm test:e2e` (Playwright, desktop + Pixel 7; starts its own API on :4100 and web on :3100)
-  - `docker compose up -d`, then `pnpm --filter @sproutly/api migrate`
+  - `docker compose up -d`, then `pnpm --filter @sproutly/api migrate` (runs migrations, then syncs the catalogue into Postgres)
 - **Local config:** copy `apps/api/.env.example` to `apps/api/.env` and fill in the two secrets. Sign-in codes print in the API console.
 - **Tests:**
   - API: Vitest + Supertest against `createApp(deps)`. `src/test/helpers.ts` builds deps with a recording email sender and a mocked Google verifier. The test DB `sproutly_test` is recreated each run; Redis db 1.
@@ -47,7 +49,7 @@ docker-compose.yml  postgres:16 (sproutly/sproutly, db sproutly) + redis:7
   - E2E: `apps/web/e2e/`. DB `sproutly_e2e`, Redis db 2. Codes are read from `dev:outbox:{email}` in Redis, and the Google GIS script is stubbed. Every E2E run includes axe WCAG 2.1 AA checks.
 - **Code layout:**
   - API: `src/auth/` (email codes, Google, tokens, routes), `src/analytics/`, `src/users/`, `migrations/*.sql`.
-  - Web: `src/screens/` (onboarding question steps in `src/screens/onboarding/`), `src/onboarding/flow.ts` (step order, defaults, answer rules), `src/components/` (Button, TextField, ProgressBar, icons), `src/stores/` (auth in memory, onboarding persisted), `src/lib/api.ts`, `src/routes.tsx`.
+  - Web: `src/screens/` (onboarding question steps in `src/screens/onboarding/`), `src/onboarding/flow.ts` (step order, defaults, answer rules), `src/onboarding/cityGuess.ts` (background IP city guess), `src/components/` (Button, TextField, ProgressBar, icons), `src/stores/` (auth in memory, onboarding persisted), `src/lib/api.ts`, `src/routes.tsx`.
 - API imports are ESM (NodeNext), so relative imports need `.js` extensions.
 - CI: `.github/workflows/ci.yml` runs install → lint → format:check → typecheck → test → build.
 
@@ -216,7 +218,13 @@ Full detail is in `docs/onboarding_v2_spec.md`. There are 8 screens: 5 quick tap
 - `users.onboarding_step` holds the last completed step (0, 6 or 7 in v2). It only increments; lower values are ignored.
 
 ### Data model
-- **Built:** `users` (no `password_hash`), `auth_identities`, `refresh_tokens`, `onboarding_events` (migrations in `apps/api/migrations/`).
+- **Built:** `users` (no `password_hash`), `auth_identities`, `refresh_tokens`, `onboarding_events`, and `plants`, `packs`, `pack_plants` (migrations in `apps/api/migrations/`).
+- **Catalogue:**
+  - Plant and pack data lives in `packages/catalogue/src/index.ts`. Edit it there, never in the DB.
+  - `pnpm migrate` upserts it into Postgres (`apps/api/src/catalogue/sync.ts`).
+  - The web app bundles it, so step 4 needs no fetch.
+  - Pack rules live in the same package: `recommendPack`, `needsMoreSun`, `plantsForLight`. "Not sure" sunlight counts as some sun.
+  - It's consumed from TypeScript source via the `source` export condition (Vite, Vitest, tsx `--conditions=source`, tsconfig `customConditions`); the production build uses `dist`.
 - **Specified, not built** (see `docs/onboarding_v2_spec.md`):
   - `users` + `sunlight`, `reminder_time`, `timezone`, `location_source`
   - `plants`, `packs`, `pack_plants`
@@ -232,6 +240,7 @@ Full detail is in `docs/onboarding_v2_spec.md`. There are 8 screens: 5 quick tap
   - `POST /auth/refresh`, `POST /auth/logout`
   - `GET /users/me/onboarding-state`
   - `POST /analytics/events`
+  - `GET /geo/guess` (public; city and country from Cloudflare's `cf-ipcity` / `cf-ipcountry`, otherwise `{city: null}`)
 - **Specified, not built:**
   - `GET /geo/guess`
   - `POST /onboarding/setup`

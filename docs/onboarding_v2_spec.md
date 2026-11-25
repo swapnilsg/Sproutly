@@ -141,9 +141,13 @@ Steps 1–5 are never recorded on the server; they're guest steps. New accounts 
   - 🌿 **Easy balcony herbs** — basil, mint, chives
   - 🪴 **Beginner houseplants** — pothos, snake plant, peace lily
   - 🌸 **Balcony flowers** — petunias, marigolds, lavender
-  - A pack that needs more light than the user reported shows a gentle note: "Needs more sun than your spot gets". It stays selectable.
+  - A pack that needs more light than the user reported shows a gentle note: "Needs more sun than your spot gets". It stays selectable. This also applies to herbs when the spot is mostly shade.
 - CTA: **"Add these to my garden"**
-- Link: **"Choose my own plants"** → an inline picker of the catalogue's beginner plants, filtered by light, max 5 selected.
+- Link: **"Choose my own plants"** opens an inline picker of the catalogue's beginner plants, filtered by light, max 5 selected.
+  - Heading "Choose up to 5 plants" with an "N of 5 chosen" counter. Once 5 are picked, the rest are disabled.
+  - The CTA reads "Pick at least one plant" until one is chosen.
+  - "Use a bundle instead" goes back to the packs.
+  - Picking plants replaces the pack (they're mutually exclusive).
 - "Skip for now"
 
 **Recommendation matrix** (sunlight `unknown` is treated as `some`):

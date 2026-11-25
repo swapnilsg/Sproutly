@@ -2,6 +2,7 @@ import { Navigate, Outlet, useParams, type RouteObject } from 'react-router';
 import { homeRoute, useAuth } from './stores/auth';
 import { Placeholder } from './screens/Placeholder';
 import { SignUp } from './screens/SignUp';
+import { StepPack } from './screens/onboarding/StepPack';
 import { StepSpace } from './screens/onboarding/StepSpace';
 import { StepSunlight } from './screens/onboarding/StepSunlight';
 import { VerifyCode } from './screens/VerifyCode';
@@ -64,6 +65,7 @@ export const routes: RouteObject[] = [
     children: [
       { path: '/onboarding/2', element: <StepSpace /> },
       { path: '/onboarding/3', element: <StepSunlight /> },
+      { path: '/onboarding/4', element: <StepPack /> },
     ],
   },
   {

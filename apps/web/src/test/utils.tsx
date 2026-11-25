@@ -42,6 +42,11 @@ export function renderAt(path: string, session: Session | null = null) {
     step1StartedAt: null,
     spaceTypes: null,
     sunlight: null,
+    packId: null,
+    customPlantIds: [],
+    packChosenFor: null,
+    location: null,
+    cityGuessed: true, // no background city guess in tests unless a test asks for one
   });
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(<RouterProvider router={router} />);

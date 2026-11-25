@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { BalconyIcon, CheckIcon, IndoorsIcon, SproutIcon } from '../../components/icons';
 import { track } from '../../lib/analytics';
+import { useCityGuess } from '../../onboarding/cityGuess';
 import {
   nextAfter,
   skipRoute,
@@ -31,6 +32,7 @@ export function StepSpace() {
   const saved = useOnboarding((s) => s.spaceTypes);
   const [selected, setSelected] = useState<SpaceType[]>(saved ?? STEP_DEFAULTS.spaceTypes);
   const shownAt = useRef(Date.now());
+  useCityGuess();
 
   return (
     <QuestionLayout
