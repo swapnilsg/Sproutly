@@ -53,7 +53,7 @@ export function createTestContext() {
       email.sent = [];
       verifyGoogle.mockReset();
       await deps.db.query(
-        'TRUNCATE users, auth_identities, refresh_tokens, onboarding_events CASCADE',
+        'TRUNCATE users, auth_identities, refresh_tokens, onboarding_events, gardens CASCADE',
       );
       await deps.redis.flushdb();
     },
