@@ -12,6 +12,8 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${E2E.webPort}`,
     trace: 'retain-on-failure',
+    // No colour fades, so accessibility checks always measure the final colours.
+    reducedMotion: 'reduce',
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },

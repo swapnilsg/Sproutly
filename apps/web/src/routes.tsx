@@ -2,6 +2,7 @@ import { Navigate, Outlet, useParams, type RouteObject } from 'react-router';
 import { homeRoute, useAuth } from './stores/auth';
 import { Placeholder } from './screens/Placeholder';
 import { SignUp } from './screens/SignUp';
+import { StepMeetPlant } from './screens/onboarding/StepMeetPlant';
 import { StepPack } from './screens/onboarding/StepPack';
 import { StepSpace } from './screens/onboarding/StepSpace';
 import { StepSunlight } from './screens/onboarding/StepSunlight';
@@ -39,14 +40,13 @@ function RequireAuth() {
   return <Outlet />;
 }
 
-/** Placeholders for unbuilt steps. Question steps 3–5 are always open; later steps can't be skipped ahead to. */
+/** Placeholders for the unbuilt steps 7–8; they can't be reached before the garden is saved. */
 function OnboardingStep() {
   const session = useAuth((s) => s.session)!;
   const step = Number(useParams().step);
   const next = Math.min(session.onboardingStep + 1, 8);
   if (session.onboardingDone) return <Navigate to="/dashboard" replace />;
-  const isQuestionStep = step >= 3 && step <= 5;
-  if (!Number.isInteger(step) || step < 2 || (!isQuestionStep && step > next)) {
+  if (!Number.isInteger(step) || step < 7 || step > next) {
     return <Navigate to={homeRoute(session)} replace />;
   }
   return <Placeholder title={`Onboarding step ${step}`} />;
@@ -66,6 +66,7 @@ export const routes: RouteObject[] = [
       { path: '/onboarding/2', element: <StepSpace /> },
       { path: '/onboarding/3', element: <StepSunlight /> },
       { path: '/onboarding/4', element: <StepPack /> },
+      { path: '/onboarding/5', element: <StepMeetPlant /> },
     ],
   },
   {

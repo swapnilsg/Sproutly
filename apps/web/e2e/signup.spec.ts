@@ -1,26 +1,66 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
+import pg from 'pg';
+import { E2E } from './env';
 import { expect, latestCode, test, uniqueEmail } from './fixtures';
 
+/** Steps 2–5 with the default answers (balcony, not sure, herbs), then "Save my garden". */
+async function answerQuestions(page: Page, { owned = true } = {}) {
+  await expect(page.getByRole('heading', { name: 'Where will your plants live?' })).toBeVisible();
+  await page.getByRole('button', { name: 'That’s where they’ll live' }).click();
+  await expect(page.getByRole('heading', { name: 'How sunny is that spot?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Show me plants that fit' }).click();
+  await expect(page.getByRole('heading', { name: 'Start with a bundle?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Add these to my garden' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: /^Say hi to your/ })).toBeVisible();
+  await page.getByRole('radio', { name: owned ? /^Yes, they’re here/ : /^Not yet/ }).check();
+  await page.getByRole('button', { name: 'Save my garden' }).click();
+}
+
 /**
- * New user: Welcome → "Start my garden" → steps 2–4 (default answers) → Save your garden → email.
+ * New user: Welcome → "Start my garden" → steps 2–5 → Save your garden → email.
  * Returning user: Welcome → "I already have an account" → email.
  */
-async function requestCode(page: Page, email: string, entry = 'Start my garden') {
+async function requestCode(
+  page: Page,
+  email: string,
+  entry = 'Start my garden',
+  { owned = true } = {},
+) {
   await page.goto('/');
   await expect(page).toHaveURL(/\/onboarding\/1$/);
   await page.getByRole('link', { name: entry }).click();
-  if (entry === 'Start my garden') {
-    await expect(page.getByRole('heading', { name: 'Where will your plants live?' })).toBeVisible();
-    await page.getByRole('button', { name: 'That’s where they’ll live' }).click();
-    await expect(page.getByRole('heading', { name: 'How sunny is that spot?' })).toBeVisible();
-    await page.getByRole('button', { name: 'Show me plants that fit' }).click();
-    await expect(page.getByRole('heading', { name: 'Start with a bundle?' })).toBeVisible();
-    await page.getByRole('button', { name: 'Add these to my garden' }).click();
-  }
+  if (entry === 'Start my garden') await answerQuestions(page, { owned });
   await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Continue with email' }).click();
   await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
+}
+
+/** The saved garden for `email`, straight from the E2E database. */
+async function gardenFor(email: string) {
+  const db = new pg.Client({ connectionString: E2E.databaseUrl });
+  await db.connect();
+  try {
+    const { rows } = await db.query(
+      `SELECT gp.plant_id, gp.owned, t.type, t.is_first_task, u.sunlight, u.onboarding_step
+       FROM users u
+       JOIN gardens g ON g.user_id = u.id
+       JOIN garden_plants gp ON gp.garden_id = g.id
+       JOIN tasks t ON t.garden_plant_id = gp.id
+       WHERE u.email = $1
+       ORDER BY gp.position`,
+      [email],
+    );
+    return rows;
+  } finally {
+    await db.end();
+  }
+}
+
+/** After sign-up the garden is saved and the user moves on to reminders (still a placeholder). */
+async function expectOnStep7(page: Page) {
+  await expect(page).toHaveURL(/\/onboarding\/7$/);
+  await expect(page.getByRole('heading', { name: 'Onboarding step 7' })).toBeVisible();
 }
 
 async function expectNoA11yViolations(page: Page) {
@@ -34,24 +74,65 @@ async function expectNoA11yViolations(page: Page) {
   ).toEqual([]);
 }
 
-test('new user signs up with an email code and lands on step 2', async ({ page, redis }) => {
+test('new user answers, signs up, and their garden is saved', async ({ page, redis }) => {
   const email = uniqueEmail('new');
   await requestCode(page, email);
   await expect(page.getByText(email)).toBeVisible();
 
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
-  await expect(page).toHaveURL(/\/onboarding\/2$/);
-  await expect(page.getByRole('heading', { name: 'Where will your plants live?' })).toBeVisible();
+  await expectOnStep7(page);
+  expect(await gardenFor(email)).toEqual([
+    {
+      plant_id: 'basil',
+      owned: true,
+      type: 'check_soil',
+      is_first_task: true,
+      sunlight: 'unknown',
+      onboarding_step: 6,
+    },
+    {
+      plant_id: 'mint',
+      owned: true,
+      type: 'water',
+      is_first_task: false,
+      sunlight: 'unknown',
+      onboarding_step: 6,
+    },
+    {
+      plant_id: 'chives',
+      owned: true,
+      type: 'water',
+      is_first_task: false,
+      sunlight: 'unknown',
+      onboarding_step: 6,
+    },
+  ]);
+  // Saved, so nothing is left behind in the browser.
+  const stored = await page.evaluate(() => localStorage.getItem('sproutly_onboarding_v1'));
+  expect(JSON.parse(stored!).state).toMatchObject({ spaceTypes: null, packId: null });
+});
+
+test('plants not bought yet start with "pick up" tasks', async ({ page, redis }) => {
+  const email = uniqueEmail('notyet');
+  await requestCode(page, email, 'Start my garden', { owned: false });
+  await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
+  await expectOnStep7(page);
+  const garden = await gardenFor(email);
+  expect(garden.map((r) => [r.owned, r.type])).toEqual([
+    [false, 'buy'],
+    [false, 'buy'],
+    [false, 'buy'],
+  ]);
 });
 
 test('session survives a reload without storing the token', async ({ page, redis }) => {
   const email = uniqueEmail('reload');
   await requestCode(page, email);
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
-  await expect(page).toHaveURL(/\/onboarding\/2$/);
+  await expectOnStep7(page);
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Where will your plants live?' })).toBeVisible();
+  await expectOnStep7(page);
 
   const stored = await page.evaluate(() => JSON.stringify({ ...localStorage }));
   expect(stored).not.toMatch(/eyJ/); // no JWT in localStorage
@@ -68,17 +149,16 @@ test('wrong code shows a friendly error, right code still works', async ({ page,
   await page.getByLabel('Sign-in code').fill(wrong);
   await expect(page.getByRole('alert')).toHaveText("That code didn't match — try again.");
   await page.getByLabel('Sign-in code').fill(code);
-  await expect(page).toHaveURL(/\/onboarding\/2$/);
+  await expectOnStep7(page);
 });
 
 test('returning user signs back in after logging out', async ({ page, redis }) => {
   const email = uniqueEmail('returning');
   await requestCode(page, email);
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
-  await expect(page).toHaveURL(/\/onboarding\/2$/);
+  await expectOnStep7(page);
 
-  // Log out lives on the placeholder screens for now; step 5 is the next one.
-  await page.goto('/onboarding/5');
+  // Log out lives on the placeholder screens for now (step 7 is one).
   await page.getByRole('button', { name: 'Log out' }).click();
   await expect(page).toHaveURL(/\/onboarding\/1$/);
   await page.reload();
@@ -88,7 +168,26 @@ test('returning user signs back in after logging out', async ({ page, redis }) =
   await requestCode(page, email, 'I already have an account');
   await expect(page).toHaveURL(/\/signin\/code$/);
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
-  await expect(page).toHaveURL(/\/onboarding\/2$/);
+  await expectOnStep7(page);
+});
+
+test('a returning user who answers the questions again keeps their original garden', async ({
+  page,
+  redis,
+}) => {
+  const email = uniqueEmail('again');
+  await requestCode(page, email);
+  await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
+  await expectOnStep7(page);
+  await page.getByRole('button', { name: 'Log out' }).click();
+
+  // Same person, new answers (plants not owned this time), same email.
+  await redis.del(`dev:outbox:${email}`);
+  await requestCode(page, email, 'Start my garden', { owned: false });
+  await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
+  await expectOnStep7(page);
+  const garden = await gardenFor(email);
+  expect(garden.map((r) => r.type)).toEqual(['check_soil', 'water', 'water']);
 });
 
 test('"Use a different email" goes back with the field editable', async ({ page }) => {
@@ -98,7 +197,7 @@ test('"Use a different email" goes back with the field editable', async ({ page 
   await expect(page.getByLabel('Email')).toBeEditable();
 });
 
-test('step 2–4 answers survive a reload and sign-up', async ({ page, redis }) => {
+test('answers survive a reload and are saved at sign-up', async ({ page, redis }) => {
   const email = uniqueEmail('space');
   await page.goto('/onboarding/1');
   await page.getByRole('link', { name: 'Start my garden' }).click();
@@ -115,47 +214,59 @@ test('step 2–4 answers survive a reload and sign-up', async ({ page, redis }) 
   // Shade → houseplants recommended; pick it and continue.
   await expect(page.getByRole('radio', { name: /Beginner houseplants/ })).toBeChecked();
   await page.getByRole('button', { name: 'Add these to my garden' }).click();
-  await expect(page).toHaveURL(/\/onboarding\/6$/);
+  await expect(page).toHaveURL(/\/onboarding\/5$/);
 
   // Back to step 2 and reload: the answers are still there.
   await page.goBack();
   await page.goBack();
   await page.goBack();
+  await expect(page).toHaveURL(/\/onboarding\/2$/);
   await page.reload();
   await expect(tile(/^Not sure yet/)).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'That’s where they’ll live' }).click();
   await expect(page.getByRole('radio', { name: /^Mostly shade/ })).toBeChecked();
   await page.getByRole('button', { name: 'Show me plants that fit' }).click();
   await page.getByRole('button', { name: 'Add these to my garden' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Say hi to your pothos!');
+  await page.getByRole('button', { name: 'Tap to give it a nickname' }).click();
+  await page.getByLabel('Nickname').fill('Leafy');
+  await page.getByLabel('Nickname').press('Enter');
+  await page.getByRole('radio', { name: /^Yes, they’re here/ }).check();
+  await page.getByRole('button', { name: 'Save my garden' }).click();
 
   await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Continue with email' }).click();
   await page.getByLabel('Sign-in code').fill(await latestCode(redis, email));
-  await expect(page).toHaveURL(/\/onboarding\/2$/);
-  const stored = await page.evaluate(() => localStorage.getItem('sproutly_onboarding_v1'));
-  expect(JSON.parse(stored!).state).toMatchObject({
-    spaceTypes: ['unknown'],
-    sunlight: 'shade',
-    packId: 'houseplants',
-  });
+  await expectOnStep7(page);
+  const garden = await gardenFor(email);
+  expect(garden.map((r) => r.plant_id)).toEqual(['pothos', 'snake-plant', 'peace-lily']);
+  expect(garden[0]).toMatchObject({ sunlight: 'shade' });
 });
 
 test('Google sign-in saves the garden', async ({ page }) => {
-  // The backend Google path is covered by API tests; here the token exchange is stubbed.
+  // The backend Google and setup paths are covered by API tests; here both calls are stubbed.
   await page.route('**/api/v1/auth/google', (route) =>
     route.fulfill({
       json: {
         token: 'e2e-token',
         user_id: '00000000-0000-0000-0000-000000000001',
-        onboarding_step: 1,
+        onboarding_step: 0,
         onboarding_done: false,
         is_new_user: true,
       },
     }),
   );
-  await page.goto('/onboarding/6');
+  let setupAuth: string | undefined;
+  await page.route('**/api/v1/onboarding/setup', (route) => {
+    setupAuth = route.request().headers()['authorization'];
+    return route.fulfill({ status: 201, json: {} });
+  });
+  await page.goto('/onboarding/1');
+  await page.getByRole('link', { name: 'Start my garden' }).click();
+  await answerQuestions(page);
   await page.getByRole('button', { name: 'Continue with Google' }).click();
-  await expect(page).toHaveURL(/\/onboarding\/2$/);
+  await expectOnStep7(page);
+  expect(setupAuth).toBe('Bearer e2e-token');
 });
 
 test('welcome, sign-up, sign-in and code screens have no accessibility violations', async ({
@@ -185,6 +296,15 @@ test('welcome, sign-up, sign-in and code screens have no accessibility violation
   await page.getByRole('button', { name: 'Use a bundle instead' }).click();
 
   await page.getByRole('button', { name: 'Add these to my garden' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: /^Say hi to your/ })).toBeVisible();
+  await expectNoA11yViolations(page);
+  await page.getByRole('button', { name: 'Tap to give it a nickname' }).click();
+  await expectNoA11yViolations(page);
+  await page.getByLabel('Nickname').press('Escape');
+  await page.getByRole('radio', { name: /^Not yet/ }).check();
+  await expectNoA11yViolations(page);
+
+  await page.getByRole('button', { name: 'Save my garden' }).click();
   await expect(page.getByRole('heading', { name: 'Your garden is ready 🌱' })).toBeVisible();
   await expectNoA11yViolations(page);
 
@@ -224,11 +344,18 @@ test('sign-up works with the keyboard alone', async ({ page, redis }) => {
   await expect(page.getByRole('radio', { name: /Easy balcony herbs/ })).toBeChecked();
   await page.getByRole('button', { name: 'Add these to my garden' }).focus();
   await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/onboarding\/5$/);
+  // No default answer on step 5: Space picks one, then Enter on "Save my garden".
+  await page.getByRole('radio', { name: /^Yes, they’re here/ }).focus();
+  await page.keyboard.press('Space');
+  await expect(page.getByRole('radio', { name: /^Yes, they’re here/ })).toBeChecked();
+  await page.getByRole('button', { name: 'Save my garden' }).focus();
+  await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/onboarding\/6$/);
   await page.getByLabel('Email').focus();
   await page.keyboard.type(email);
   await page.keyboard.press('Enter');
   await expect(page.getByLabel('Sign-in code')).toBeFocused();
   await page.keyboard.type(await latestCode(redis, email));
-  await expect(page).toHaveURL(/\/onboarding\/2$/);
+  await expectOnStep7(page);
 });

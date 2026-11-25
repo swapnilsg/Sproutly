@@ -6,21 +6,58 @@ import { TextField } from '../components/TextField';
 import { track } from '../lib/analytics';
 import { apiFetch, friendlyError } from '../lib/api';
 import { homeRoute, useAuth, type SessionResponse } from '../stores/auth';
+import { answersComplete } from '../onboarding/answers';
+import { AFTER_SETUP_ROUTE, saveGarden } from '../onboarding/saveGarden';
 import { useOnboarding } from '../stores/onboarding';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_MODES, type AuthMode } from './authMode';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Called by both sign-in methods once a session exists. */
+/**
+ * Called by both sign-in methods once the server has issued a session.
+ * A new account (step 0) with all of steps 2–5 answered gets its garden saved straight away;
+ * a new account with answers missing goes back to the questions; a returning user goes home.
+ */
 export function useCompleteSignIn(mode: AuthMode) {
   const navigate = useNavigate();
-  return (res: SessionResponse, method: 'google' | 'email') => {
-    const { step1StartedAt, setPendingEmail } = useOnboarding.getState();
-    useAuth.getState().setSession(res);
+  return async (res: SessionResponse, method: 'google' | 'email') => {
+    const onboarding = useOnboarding.getState();
+    const { step1StartedAt, setPendingEmail } = onboarding;
+
+    let session = res;
+    let destination: string | null = null;
+    let saveFailed = false;
+    let gardenAlreadyExists = false;
+    // No garden yet (step < 6; older accounts may sit at 1 rather than 0).
+    if (res.onboarding_step < 6 && answersComplete(onboarding)) {
+      // Save before setting the session, so the guest-only screen doesn't redirect mid-save.
+      try {
+        if ((await saveGarden(res.token)) === 'saved') {
+          session = { ...res, onboarding_step: 6 };
+          destination = AFTER_SETUP_ROUTE;
+        } else {
+          gardenAlreadyExists = true;
+        }
+      } catch (err) {
+        // Couldn't save right now: step 5 explains and offers "Save my garden" again,
+        // with the answers intact.
+        saveFailed = true;
+        onboarding.setSaveError(friendlyError(err));
+        destination = '/onboarding/5';
+      }
+    } else if (res.onboarding_step >= 6) {
+      // Already has a garden: answers from this browser belong to no one.
+      onboarding.reset();
+    }
+    useAuth.getState().setSession(session);
+    if (gardenAlreadyExists) {
+      // The server is ahead of this response; fetch the real progress before routing.
+      await useAuth.getState().refresh();
+    }
     // Saving the garden is onboarding step 6. A returning user signing in completes no step,
-    // unless they turn out to be new.
-    if (mode === 'save' || res.is_new_user) {
+    // unless they turn out to be new. A failed save isn't a completed step.
+    if (!saveFailed && (mode === 'save' || res.is_new_user)) {
       track('onboarding_step_completed', {
         step: 6,
         method,
@@ -28,8 +65,7 @@ export function useCompleteSignIn(mode: AuthMode) {
         time_on_step: step1StartedAt ? Date.now() - step1StartedAt : undefined,
       });
     }
-    navigate(homeRoute(useAuth.getState().session!), { replace: true });
-    // Keep the step 2–5 answers: they're saved to the server by setup, not here.
+    navigate(destination ?? homeRoute(useAuth.getState().session!), { replace: true });
     setPendingEmail(null);
   };
 }
@@ -82,7 +118,7 @@ export function SignUp({ mode }: { mode: AuthMode }) {
         body: { credential },
         auth: false,
       });
-      completeSignIn(res, 'google');
+      await completeSignIn(res, 'google');
     } catch (err) {
       setFormError(friendlyError(err));
       setGoogleBusy(false);

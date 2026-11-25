@@ -51,7 +51,7 @@ describe('POST /auth/email/verify', () => {
     const res = await ctx.signIn('sam@example.com');
     expect(res.body).toMatchObject({
       is_new_user: true,
-      onboarding_step: 1,
+      onboarding_step: 0,
       onboarding_done: false,
     });
     expect(res.body.token).toEqual(expect.any(String));
@@ -158,7 +158,7 @@ describe('POST /auth/google', () => {
     ctx.verifyGoogle.mockResolvedValue(profile);
     const res = await api().post('/api/v1/auth/google').send({ credential: 'id-token' });
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ is_new_user: true, onboarding_step: 1 });
+    expect(res.body).toMatchObject({ is_new_user: true, onboarding_step: 0 });
     expect(ctx.verifyGoogle).toHaveBeenCalledWith('id-token');
 
     const { rows } = await ctx.deps.db.query('SELECT name FROM users WHERE id = $1', [
@@ -216,7 +216,7 @@ describe('POST /auth/refresh', () => {
 
     const res = await api().post('/api/v1/auth/refresh').set('Cookie', cookie);
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ user_id: signIn.body.user_id, onboarding_step: 1 });
+    expect(res.body).toMatchObject({ user_id: signIn.body.user_id, onboarding_step: 0 });
     expect(res.body.token).toEqual(expect.any(String));
     expect(refreshCookie(res)).not.toBe(cookie);
   });
@@ -287,7 +287,7 @@ describe('GET /users/me/onboarding-state', () => {
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
       email: 'sam@example.com',
-      onboarding_step: 1,
+      onboarding_step: 0,
       onboarding_done: false,
       experience_level: 'beginner',
       space_types: [],

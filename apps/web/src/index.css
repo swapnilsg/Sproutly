@@ -119,6 +119,12 @@ body {
   .spinner {
     animation-duration: 2s;
   }
+  /* Colour fades are decoration: skip them for people who ask for less motion. */
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+  }
 }
 
 /* ── Form fields ── */
@@ -878,6 +884,161 @@ body {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* ── Step 5: meet your plant ── */
+.plant-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 18px;
+  border-radius: 20px;
+  background: var(--morning-mist);
+  text-align: center;
+}
+.plant-card-emoji {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+}
+.plant-card-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.plant-card-title {
+  margin: 0;
+  font: 700 24px/1.2 var(--font-heading);
+  color: var(--sprout-green-dark);
+  overflow-wrap: anywhere;
+}
+.nickname-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  font: 500 14px var(--font-body);
+  color: var(--sprout-green-dark);
+  cursor: pointer;
+}
+.nickname-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.nickname-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.nickname-field input {
+  width: 220px;
+  height: 44px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--sprout-green);
+  background: #fff;
+  font: 16px var(--font-body);
+  color: var(--text);
+  text-align: center;
+}
+.care-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.care-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.care-chip-water {
+  background: #e6f1fb;
+  color: #185fa5;
+}
+.care-chip-sun {
+  background: #faeeda;
+  color: #854f0b;
+}
+.care-chip-easy {
+  background: #eaf3de;
+  color: #27500a;
+}
+.plant-card-others {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.ownership {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ownership-question {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+.radio-cards-2col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.radio-cards-2col .radio-card {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: space-between;
+  min-height: 112px;
+  padding: 14px;
+  gap: 12px;
+}
+.radio-cards-2col .radio-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+.radio-cards-2col .radio-card-text {
+  order: 3;
+  flex-basis: 100%;
+}
+.radio-cards-2col .radio-card-label {
+  font-size: 15px;
+  line-height: 1.3;
+}
+.radio-cards-2col .radio-card-input {
+  margin-left: auto;
+}
+@media (max-width: 340px) {
+  .radio-cards-2col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.question-error {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ── Placeholder & splash ── */

@@ -61,7 +61,7 @@ export function VerifyCode({ mode }: { mode: AuthMode }) {
         body: { email, code: value },
         auth: false,
       });
-      completeSignIn(res, 'email');
+      await completeSignIn(res, 'email');
     } catch (err) {
       setVerifying(false);
       const code = err instanceof ApiError ? err.code : null;

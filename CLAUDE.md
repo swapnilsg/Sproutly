@@ -4,23 +4,24 @@ A web-first garden companion for **beginner hobbyist gardeners** growing on balc
 North star: *"This is fun and I want to learn more."* Every feature must reduce fear, build curiosity, or celebrate a small win.
 
 Status: onboarding v2 is being built step by step, one feature branch per step. Built so far:
-- Step 1, Welcome, at `/onboarding/1`.
-- Step 2, "Where will your plants live?", at `/onboarding/2`.
-- Step 3, "How sunny is that spot?", at `/onboarding/3`.
-- Step 4, "Start with a bundle?" (starter pack, optional city, "Choose my own plants"), at `/onboarding/4`.
-- Steps 2 and 3 share the `QuestionLayout` (`src/screens/onboarding/`). Single-choice questions use `RadioCardGroup` (`src/components/`).
+- Steps 1–5, the Welcome screen and all the questions, at `/onboarding/1`–`/onboarding/5`.
+  - The questions share `QuestionLayout` (`src/screens/onboarding/`). Single-choice questions use `RadioCardGroup` (`src/components/`).
 - Passwordless sign-up at `/onboarding/6` ("Save your garden") and `/signin` ("Welcome back"). Both use `SignUp` / `VerifyCode` with a `mode` prop (see `apps/web/src/screens/authMode.ts`).
+- **Garden setup:** after sign-up, the answers are saved by `POST /onboarding/setup`, which creates the garden, its plants and the first tasks.
 
-Steps 5, 7 and 8 and the dashboard are still placeholders.
+Steps 7 and 8 and the dashboard are still placeholders. Log out only exists on those placeholder screens for now.
 
-**Interim until those steps exist:**
-- **After a question step:** `nextAfter()` in `apps/web/src/onboarding/flow.ts` picks where to go. Add each new step to `BUILT_QUESTION_STEPS` there.
-  - Guests go 2 → 3 → `/onboarding/6` (Save your garden).
-  - Signed-in users without a garden go on to the first unbuilt question's placeholder (step 5).
-  - "Skip for now" uses `skipRoute()`: it fills every unanswered question with its default (`fillDefaults()` in the store) and jumps straight to Save your garden.
-- **Answers:** step 2–5 answers live in the onboarding store (`spaceTypes`, `sunlight`, `packId` or `customPlantIds`, and `location`). They survive sign-in; only setup will clear them.
-- **Log out:** only on the placeholder screens for now.
-- `NEW_USER_STEP` stays `1` until `POST /onboarding/setup` exists. Setting it to 0 now would send new users back to the guest-only Welcome screen.
+**How the question flow works** (`apps/web/src/onboarding/`):
+- **Order:** `nextAfter()` (`flow.ts`) steps through 2 → 3 → 4 → 5.
+- **Leaving the questions:** step 5's "Save my garden" and every "Skip for now" go through `useFinishQuestions()` (`saveGarden.ts`).
+  - Guests go to `/onboarding/6`.
+  - Signed-in users have their garden saved right away and go to `/onboarding/7`.
+  - Skip first calls `fillDefaults()`: balcony, not sure, the recommended pack, and "not yet".
+- **Answers:** they live in the persisted onboarding store until setup succeeds, then `reset()` clears them. `answers.ts` turns the store into the setup body (`resolveGardenPlants`, `buildSetupBody`).
+- **At sign-in** (`useCompleteSignIn` in `src/screens/SignUp.tsx`):
+  - **New account (step 0) with every answer:** the garden is saved *before* the session is set, so the guest-only screen can't redirect mid-save. The user lands on step 7. If saving fails, they go to step 5 with their answers intact.
+  - **New account with answers missing:** `homeRoute()` resumes at the first unanswered question.
+  - **Account that already has a garden:** this browser's answers are dropped.
 
 The product name **Sproutly is final**.
 
@@ -111,6 +112,9 @@ Full detail is in `docs/onboarding_v2_spec.md`. There are 8 screens: 5 quick tap
   - Signed-in users without a garden also go through steps 2–5, and skip step 6.
   - A `409 garden_exists` response from setup means a returning user: drop the local answers and go home.
 - **Step mapping:** `users.onboarding_step` = last completed step. `0` = account but no garden; `6` = setup saved; `7` = reminders done. `onboarding_done` is set when step 8 renders. New accounts start at 0.
+- **`homeRoute()`** (`src/stores/auth.ts`):
+  - Steps 0–5: the first question this browser has no answer for.
+  - 6 → `/onboarding/7`; 7 → `/onboarding/8`; done → `/dashboard`.
 - **Skip for now:** shown on steps 2–5. It fills defaults (balcony, not sure, recommended pack, plants "not yet") and jumps to step 6. There's no skip after that, and no skip-to-empty-dashboard path.
 - **Pack recommendation:**
   - Balcony, unknown space, or mixed spaces with bright/some/unknown sun → Easy balcony herbs.
@@ -121,8 +125,8 @@ Full detail is in `docs/onboarding_v2_spec.md`. There are 8 screens: 5 quick tap
   - Easy balcony herbs 🌿 (basil, mint, chives)
   - Beginner houseplants 🪴 (pothos, snake plant, peace lily)
   - Balcony flowers 🌸 (petunias, marigolds, lavender)
-- **First tasks:**
-  - Owned plants: "Check if the soil is dry" (first task) plus watering from today.
+- **First tasks** (all due today, in the user's timezone):
+  - Owned plants: "Check if the soil is dry" for the first plant (the first task), plus watering today for the others.
   - Not owned: "Pick up your [plant]" tasks; watering starts once each is done.
 - **Reminders:** if the user denies, record it, carry on, show the in-app bell, and re-prompt after 7 days. Without Web Push (Safari < 16.4): "We'll remind you in the app instead."
 - **Names:** Google provides the first name. Email users aren't asked during onboarding; the greeting falls back to "Good morning 🌱".
@@ -225,12 +229,15 @@ Full detail is in `docs/onboarding_v2_spec.md`. There are 8 screens: 5 quick tap
   - The web app bundles it, so step 4 needs no fetch.
   - Pack rules live in the same package: `recommendPack`, `needsMoreSun`, `plantsForLight`. "Not sure" sunlight counts as some sun.
   - It's consumed from TypeScript source via the `source` export condition (Vite, Vitest, tsx `--conditions=source`, tsconfig `customConditions`); the production build uses `dist`.
-- **Specified, not built** (see `docs/onboarding_v2_spec.md`):
-  - `users` + `sunlight`, `reminder_time`, `timezone`, `location_source`
-  - `plants`, `packs`, `pack_plants`
+- **Built (garden):**
+  - `users` + `sunlight`, `timezone`, `location_source`, `reminder_time`
   - `gardens` (one per user)
-  - `garden_plants` (+ `owned`)
-  - `tasks` (`water` / `check_soil` / `buy`, `is_first_task`)
+  - `garden_plants` (`owned`, `nickname`, `position`)
+  - `tasks` (`water` / `check_soil` / `buy`, `due_date`, `is_first_task`, `completed_at`)
+- **Timezones:**
+  - Compute dates in Node with `todayIn()` (`apps/api/src/time.ts`), **never in SQL**.
+  - Browsers send legacy names like `Asia/Calcutta`, which Node accepts but Postgres doesn't.
+  - DATE columns come back as `'YYYY-MM-DD'` strings (`src/db.ts`).
 - **Still to specify:** `push_subscriptions`, `tips`.
 
 ### API
@@ -241,9 +248,8 @@ Full detail is in `docs/onboarding_v2_spec.md`. There are 8 screens: 5 quick tap
   - `GET /users/me/onboarding-state`
   - `POST /analytics/events`
   - `GET /geo/guess` (public; city and country from Cloudflare's `cf-ipcity` / `cf-ipcountry`, otherwise `{city: null}`)
+  - `POST /onboarding/setup` (auth): saves the step 2–5 answers and creates the garden, plants and first tasks. 409 `garden_exists` on a second call.
 - **Specified, not built:**
-  - `GET /geo/guess`
-  - `POST /onboarding/setup`
   - `PATCH /users/me/reminders`, `PATCH /users/me/onboarding`
   - `PATCH /tasks/:id`
   - `POST /notifications/permission`

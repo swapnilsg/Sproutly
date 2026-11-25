@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { inTransaction } from '../db.js';
 
 export interface SessionUser {
   id: string;
@@ -6,23 +7,8 @@ export interface SessionUser {
   onboarding_done: boolean;
 }
 
-// Signing up completes onboarding step 1.
-const NEW_USER_STEP = 1;
-
-async function inTransaction<T>(db: pg.Pool, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
-  const client = await db.connect();
-  try {
-    await client.query('BEGIN');
-    const result = await fn(client);
-    await client.query('COMMIT');
-    return result;
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
-    throw err;
-  } finally {
-    client.release();
-  }
-}
+// A new account has no garden yet: onboarding step 0. Saving the garden (POST /onboarding/setup) moves it to 6.
+const NEW_USER_STEP = 0;
 
 async function upsertByEmail(c: pg.PoolClient, email: string, name?: string) {
   const inserted = await c.query<SessionUser>(

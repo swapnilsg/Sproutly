@@ -6,7 +6,7 @@ export type { SpaceType, Sunlight };
 
 /**
  * What "Skip for now" fills in for unanswered questions. Step 4's default is the
- * recommended pack (see fillDefaults in the onboarding store). Grows as step 5 ships.
+ * recommended pack and step 5's is "not yet" (see fillDefaults in the onboarding store).
  */
 export const STEP_DEFAULTS: { spaceTypes: SpaceType[]; sunlight: Sunlight } = {
   spaceTypes: ['balcony'],
@@ -28,32 +28,15 @@ export function toggleSpace(current: SpaceType[], id: SpaceType): SpaceType[] {
   return [...current.filter((x) => x !== 'unknown'), id];
 }
 
+/** The question steps, in order. */
 const QUESTION_STEPS = [2, 3, 4, 5];
-/** Question steps that are built, in order. Add 5 here when it ships. */
-const BUILT_QUESTION_STEPS = [2, 3, 4];
-const SAVE_GARDEN_ROUTE = '/onboarding/6';
 
 /**
- * Where signed-in users (no garden yet) go once the built questions run out.
- * Interim until step 5 and `POST /onboarding/setup` exist: the first unbuilt question's placeholder.
+ * The next question after `step` (steps 2–4). After step 5 there is no next question:
+ * use `useFinishQuestions()` (src/onboarding/saveGarden.ts), which also handles "Skip for now".
  */
-function signedInFallback(): string {
-  const unbuilt = QUESTION_STEPS.find((s) => !BUILT_QUESTION_STEPS.includes(s)) ?? 5;
-  return `/onboarding/${unbuilt}`;
-}
-
-/**
- * Where to go after answering a question step.
- * Guests run through the built questions, then save their garden (sign-up, step 6).
- * Signed-in users without a garden skip step 6.
- */
-export function nextAfter(step: number, signedIn: boolean): string {
-  const next = BUILT_QUESTION_STEPS.find((s) => s > step);
-  if (next) return `/onboarding/${next}`;
-  return signedIn ? signedInFallback() : SAVE_GARDEN_ROUTE;
-}
-
-/** "Skip for now" jumps past every remaining question (spec: straight to Save your garden). */
-export function skipRoute(signedIn: boolean): string {
-  return signedIn ? signedInFallback() : SAVE_GARDEN_ROUTE;
+export function nextAfter(step: number): string {
+  const next = QUESTION_STEPS.find((s) => s > step);
+  if (!next) throw new Error(`No question after step ${step}`);
+  return `/onboarding/${next}`;
 }

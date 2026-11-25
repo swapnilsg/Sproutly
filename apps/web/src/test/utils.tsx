@@ -37,17 +37,9 @@ export function sessionResponse(overrides: Record<string, unknown> = {}) {
 
 export function renderAt(path: string, session: Session | null = null) {
   useAuth.setState({ status: session ? 'signed_in' : 'signed_out', session });
-  useOnboarding.setState({
-    pendingEmail: null,
-    step1StartedAt: null,
-    spaceTypes: null,
-    sunlight: null,
-    packId: null,
-    customPlantIds: [],
-    packChosenFor: null,
-    location: null,
-    cityGuessed: true, // no background city guess in tests unless a test asks for one
-  });
+  // Start every test from an empty onboarding store; no background city guess unless a test asks.
+  useOnboarding.getState().reset();
+  useOnboarding.setState({ cityGuessed: true });
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(<RouterProvider router={router} />);
   return router;
