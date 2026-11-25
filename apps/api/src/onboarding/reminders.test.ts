@@ -100,6 +100,41 @@ describe('POST /onboarding/reminders', () => {
     expect(rows[0].n).toBe(0);
   });
 
+  describe('a later answer never undoes "allowed"', () => {
+    const allow = { reminder_time: '08:00', timezone: 'UTC', permission: 'granted', subscription };
+
+    it.each(['later', 'unsupported', 'denied'])(
+      'keeps "granted" when step 7 is answered "%s" in another browser',
+      async (permission) => {
+        const token = await withGarden();
+        await reminders(token, allow).expect(200);
+        await reminders(token, { reminder_time: '09:00', timezone: 'UTC', permission }).expect(200);
+        expect(await userRow()).toMatchObject({
+          notif_permission: 'granted',
+          reminder_time: '09:00',
+        });
+      },
+    );
+
+    it('keeps "denied" when a browser without push says it can’t', async () => {
+      const token = await withGarden();
+      await reminders(token, { reminder_time: '08:00', timezone: 'UTC', permission: 'denied' });
+      await reminders(token, {
+        reminder_time: '08:00',
+        timezone: 'UTC',
+        permission: 'unsupported',
+      });
+      expect((await userRow()).notif_permission).toBe('denied');
+    });
+
+    it('lets a later "allow" replace an earlier "denied"', async () => {
+      const token = await withGarden();
+      await reminders(token, { reminder_time: '08:00', timezone: 'UTC', permission: 'denied' });
+      await reminders(token, allow).expect(200);
+      expect((await userRow()).notif_permission).toBe('granted');
+    });
+  });
+
   it.each([
     ['a time that is not on the quarter hour', { reminder_time: '08:07' }],
     ['a malformed time', { reminder_time: '8am' }],

@@ -1,6 +1,11 @@
 /* Sproutly service worker: shows daily care reminders. Registered only after the user
    taps "Turn on reminders" (onboarding step 7). Sending happens server-side. */
 
+// Take control of open tabs straight away (including the one that just registered this
+// worker), so clicking a reminder can move that tab to the dashboard.
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+
 self.addEventListener('push', (event) => {
   let data = {};
   try {
@@ -26,11 +31,13 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const open = clients.find((c) => 'focus' in c);
-      if (open) {
-        open.navigate(url);
-        return open.focus();
-      }
-      return self.clients.openWindow(url);
+      if (!open) return self.clients.openWindow(url);
+      // navigate() rejects for tabs this worker doesn't control yet: open a window instead.
+      return open
+        .focus()
+        .then((client) => (client.navigate ? client.navigate(url) : null))
+        .then((client) => client || self.clients.openWindow(url))
+        .catch(() => self.clients.openWindow(url));
     }),
   );
 });

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakePush, removeFakePush } from '../test/push';
 import { askForPush, browserInfo, pushSupported } from './push';
 
@@ -44,6 +44,39 @@ describe('push', () => {
     expect(await askForPush(KEY)).toEqual({ permission: 'later' });
   });
 
+  it('reuses this browser’s subscription when it was made with the same key', async () => {
+    const key = Uint8Array.from(atob(KEY.replace(/-/g, '+').replace(/_/g, '/') + '='), (c) =>
+      c.charCodeAt(0),
+    );
+    const { subscribe, existing } = fakePush({ existingKey: key });
+    const outcome = await askForPush(KEY);
+    expect(subscribe).not.toHaveBeenCalled();
+    expect(existing!.unsubscribe).not.toHaveBeenCalled();
+    expect(outcome).toMatchObject({
+      permission: 'granted',
+      subscription: { endpoint: 'https://push.example.com/send/old' },
+    });
+  });
+
+  it('replaces a subscription made with an old key (keys rotated) instead of failing', async () => {
+    const { subscribe, existing } = fakePush({ existingKey: new Uint8Array(65).fill(7) });
+    const outcome = await askForPush(KEY);
+    expect(existing!.unsubscribe).toHaveBeenCalled();
+    expect(subscribe).toHaveBeenCalled();
+    expect(outcome).toMatchObject({
+      permission: 'granted',
+      subscription: { endpoint: 'https://push.example.com/send/abc' },
+    });
+  });
+
+  it('gives up on a service worker that never activates, instead of hanging', async () => {
+    vi.useFakeTimers();
+    fakePush({ neverReady: true });
+    const pending = askForPush(KEY);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(await pending).toEqual({ permission: 'unsupported' });
+  });
+
   it('treats a failed subscription as unsupported rather than throwing', async () => {
     fakePush({ subscribeFails: true });
     expect(await askForPush(KEY)).toEqual({ permission: 'unsupported' });
@@ -67,5 +100,23 @@ describe('browserInfo', () => {
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36 Edg/130.0',
       ),
     ).toEqual({ browser: 'edge', os: 'windows' });
+  });
+
+  it('recognises Chrome, Firefox and Edge on mobile by their own tokens', () => {
+    const ios =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)';
+    expect(browserInfo(`${ios} CriOS/130.0 Mobile/15E148 Safari/604.1`)).toEqual({
+      browser: 'chrome',
+      os: 'ios',
+    });
+    expect(browserInfo(`${ios} FxiOS/130.0 Mobile/15E148 Safari/605.1.15`)).toEqual({
+      browser: 'firefox',
+      os: 'ios',
+    });
+    expect(
+      browserInfo(
+        'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36 EdgA/130.0',
+      ),
+    ).toEqual({ browser: 'edge', os: 'android' });
   });
 });

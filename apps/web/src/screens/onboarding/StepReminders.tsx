@@ -5,7 +5,13 @@ import { BellIcon, ClockIcon, InfoIcon } from '../../components/icons';
 import { SproutMark } from '../../components/Logo';
 import { track } from '../../lib/analytics';
 import { apiFetch, friendlyError } from '../../lib/api';
-import { askForPush, browserInfo, pushSupported, type PushOutcome } from '../../lib/push';
+import {
+  askForPush,
+  browserInfo,
+  notificationsBlocked,
+  pushSupported,
+  type PushOutcome,
+} from '../../lib/push';
 import { browserTimeZone } from '../../onboarding/answers';
 import { useAuth } from '../../stores/auth';
 
@@ -48,7 +54,9 @@ export function StepReminders() {
       .catch(() => {});
   }, []);
 
-  const canPush = pushSupported() && Boolean(vapidKey);
+  // Already blocked for this site: no prompt would appear, so offer in-app reminders instead.
+  const blocked = notificationsBlocked();
+  const canPush = pushSupported() && Boolean(vapidKey) && !blocked;
   const loading = vapidKey === undefined;
   const reminderTime = toQuarterHour(time);
 
@@ -116,7 +124,9 @@ export function StepReminders() {
             type="time"
             step={900}
             value={time}
-            onChange={(e) => setTime(e.target.value || DEFAULT_TIME)}
+            // The field is briefly empty while a segment is being retyped: keep that as-is,
+            // and only apply the default and quarter-hour rounding when leaving the field.
+            onChange={(e) => setTime(e.target.value)}
             onBlur={() => setTime(reminderTime)}
             className="reminders-time-input"
             aria-describedby={`${timeId}-hint`}
@@ -141,7 +151,9 @@ export function StepReminders() {
         ) : (
           <p className="reminders-note">
             <InfoIcon />
-            Your browser can’t show notifications, so we’ll remind you in the app instead.
+            {blocked
+              ? 'Notifications are turned off for Sproutly in this browser, so we’ll remind you in the app instead.'
+              : 'Your browser can’t show notifications, so we’ll remind you in the app instead.'}
           </p>
         )}
       </div>
@@ -174,7 +186,7 @@ export function StepReminders() {
         ) : (
           <Button
             className="reminders-cta"
-            onClick={() => void save({ permission: 'unsupported' }, 'skip')}
+            onClick={() => void save({ permission: blocked ? 'denied' : 'unsupported' }, 'skip')}
             loading={busy === 'skip'}
           >
             Sounds good

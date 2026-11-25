@@ -7,6 +7,36 @@ export type PushOutcome =
     }
   | { permission: 'denied' | 'later' | 'unsupported' };
 
+const SERVICE_WORKER_TIMEOUT_MS = 10_000;
+
+/** Rejects if `promise` hasn't settled within `ms` (a stuck service worker must not hang step 7). */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timed out')), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
+function sameKey(a: ArrayBuffer | null | undefined, b: Uint8Array): boolean {
+  if (!a) return false;
+  const bytes = new Uint8Array(a);
+  return bytes.length === b.length && bytes.every((v, i) => v === b[i]);
+}
+
+/** Has the user already blocked notifications for this site? (No prompt will appear.) */
+export function notificationsBlocked(): boolean {
+  return pushSupported() && Notification.permission === 'denied';
+}
+
 /** Can this browser do Web Push at all? (Safari < 16.4 and iOS outside an installed app can't.) */
 export function pushSupported(): boolean {
   return (
@@ -41,11 +71,20 @@ export async function askForPush(vapidPublicKey: string): Promise<PushOutcome> {
   if (permission !== 'granted') return { permission: 'later' }; // dismissed the prompt
 
   try {
-    await navigator.serviceWorker.register('/sw.js');
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.subscribe({
+    const registration = await withTimeout(
+      navigator.serviceWorker.register('/sw.js').then(() => navigator.serviceWorker.ready),
+      SERVICE_WORKER_TIMEOUT_MS,
+    );
+    const key = base64UrlToBytes(vapidPublicKey);
+    // A subscription made with a different key (keys rotated) blocks subscribe(): replace it.
+    let subscription = await registration.pushManager.getSubscription();
+    if (subscription && !sameKey(subscription.options?.applicationServerKey, key)) {
+      await subscription.unsubscribe();
+      subscription = null;
+    }
+    subscription ??= await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: base64UrlToBytes(vapidPublicKey) as BufferSource,
+      applicationServerKey: key as BufferSource,
     });
     const json = subscription.toJSON();
     if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth)
@@ -65,11 +104,11 @@ export async function askForPush(vapidPublicKey: string): Promise<PushOutcome> {
 /** Coarse browser/OS names for analytics (no version numbers or fingerprinting detail). */
 export function browserInfo(userAgent = navigator.userAgent): { browser: string; os: string } {
   const ua = userAgent;
-  const browser = /Edg\//.test(ua)
+  const browser = /Edg\/|EdgA\/|EdgiOS\//.test(ua)
     ? 'edge'
-    : /Firefox\//.test(ua)
+    : /Firefox\/|FxiOS\//.test(ua)
       ? 'firefox'
-      : /Chrome\//.test(ua)
+      : /Chrome\/|CriOS\//.test(ua)
         ? 'chrome'
         : /Safari\//.test(ua)
           ? 'safari'

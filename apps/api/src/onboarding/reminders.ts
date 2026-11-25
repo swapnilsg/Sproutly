@@ -37,14 +37,6 @@ export const remindersBody = z
 
 export type RemindersBody = z.infer<typeof remindersBody>;
 
-// "later" means asked but dismissed: nothing changes, but the 7-day re-prompt clock starts.
-const STORED_PERMISSION = {
-  granted: 'granted',
-  denied: 'denied',
-  later: 'not_asked',
-  unsupported: 'unsupported',
-} as const;
-
 /** Saves step 7 and marks it complete. Requires a saved garden (step 6). */
 export function saveReminders(
   db: pg.Pool,
@@ -63,7 +55,17 @@ export function saveReminders(
 
     const updated = await c.query<{ onboarding_step: number }>(
       `UPDATE users SET
-         reminder_time = $2, timezone = $3, notif_permission = $4,
+         reminder_time = $2, timezone = $3,
+         -- Only a real answer changes the stored permission. "later" and "no push in this
+         -- browser" never undo one, and a "denied" here doesn't undo an "allowed" elsewhere
+         -- while that browser is still subscribed.
+         notif_permission = CASE
+           WHEN $4 = 'granted' THEN 'granted'
+           WHEN $4 = 'denied' AND NOT EXISTS (SELECT 1 FROM push_subscriptions s WHERE s.user_id = $1)
+             THEN 'denied'
+           WHEN $4 = 'unsupported' AND notif_permission = 'not_asked' THEN 'unsupported'
+           ELSE notif_permission
+         END,
          notif_prompted_at = CASE WHEN $5 THEN NOW() ELSE notif_prompted_at END,
          onboarding_step = GREATEST(onboarding_step, 7), updated_at = NOW()
        WHERE id = $1
@@ -72,7 +74,7 @@ export function saveReminders(
         userId,
         body.reminder_time,
         body.timezone,
-        STORED_PERMISSION[body.permission],
+        body.permission,
         body.permission !== 'unsupported',
       ],
     );
