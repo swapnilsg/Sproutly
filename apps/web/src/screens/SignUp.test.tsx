@@ -303,11 +303,23 @@ describe('Signing in hands the answers to the server', () => {
     expect(useOnboarding.getState().packId).toBe('herbs');
   });
 
-  it('keeps the answers and offers step 5 again if saving fails', async () => {
-    const { router } = await signInWith(answered, { onboarding_step: 0 }, 500);
+  it('explains a failed save on step 5, keeps the answers and records no completed step', async () => {
+    const { calls, router } = await signInWith(answered, { onboarding_step: 0 }, 500);
     await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding/5'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong — try again.');
     expect(useOnboarding.getState().plantsOwned).toBe(true);
-    expect(await screen.findByRole('button', { name: 'Save my garden' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Save my garden' })).toBeEnabled();
+    expect(
+      calls.some(
+        (c) => (c.body as { event_name?: string })?.event_name === 'onboarding_step_completed',
+      ),
+    ).toBe(false);
+  });
+
+  it('also saves the garden for older accounts that sit at step 1 without one', async () => {
+    const { calls, router } = await signInWith(answered, { onboarding_step: 1 });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding/7'));
+    expect(calls.some((c) => c.path === '/onboarding/setup')).toBe(true);
   });
 
   it('drops answers in this browser when the account already has a garden', async () => {

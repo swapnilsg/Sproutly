@@ -35,7 +35,11 @@ export const setupBody = z
         source: z.enum(['ip', 'user']),
       })
       .nullish(),
-    timezone: z.string().refine(isTimeZone, 'Unknown timezone'),
+    // An unusable timezone must never block onboarding: fall back to UTC.
+    timezone: z
+      .string()
+      .max(64)
+      .transform((tz) => (isTimeZone(tz) ? tz : 'UTC')),
   })
   .refine((b) => Boolean(b.pack_id) !== Boolean(b.custom_plant_ids?.length), {
     message: 'Choose a starter pack or 1–5 plants',
@@ -55,6 +59,10 @@ export function setupGarden(db: pg.Pool, userId: string, body: SetupBody) {
   const nickname = body.first_plant_nickname?.trim() || null;
 
   return inTransaction(db, async (c) => {
+    // Lock the user row: a deleted account gets a clean 404, and concurrent setups queue up.
+    const user = await c.query('SELECT 1 FROM users WHERE id = $1 FOR UPDATE', [userId]);
+    if (user.rowCount === 0) throw new HttpError(404, 'user_not_found');
+
     const garden = await c.query<{ id: string }>(
       `INSERT INTO gardens (user_id) VALUES ($1)
        ON CONFLICT (user_id) DO NOTHING RETURNING id`,
@@ -63,7 +71,7 @@ export function setupGarden(db: pg.Pool, userId: string, body: SetupBody) {
     if (!garden.rows[0]) throw new HttpError(409, 'garden_exists');
     const gardenId = garden.rows[0].id;
 
-    const user = await c.query<{ onboarding_step: number }>(
+    const updated = await c.query<{ onboarding_step: number }>(
       `UPDATE users SET
          space_types = $2, sunlight = $3, timezone = $4,
          location_raw = $5, city = $6, country_code = $7, location_source = $8,
@@ -118,7 +126,7 @@ export function setupGarden(db: pg.Pool, userId: string, body: SetupBody) {
 
     return {
       garden_id: gardenId,
-      onboarding_step: user.rows[0]!.onboarding_step,
+      onboarding_step: updated.rows[0]!.onboarding_step,
       plants: ordered.map((gp) => {
         const plant = getPlant(gp.plant_id)!;
         return {

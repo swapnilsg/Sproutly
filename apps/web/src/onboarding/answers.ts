@@ -22,9 +22,10 @@ export function resolveGardenPlants(s: OnboardingAnswers): {
   packId: string | null;
   plants: Plant[];
 } {
-  if (s.customPlantIds.length > 0) {
-    return { packId: null, plants: s.customPlantIds.map((id) => getPlant(id)!).filter(Boolean) };
-  }
+  // Saved picks can outlive the catalogue (a plant removed in a later release): drop unknown ids,
+  // and if none are left, fall back to the pack below rather than an empty garden.
+  const picked = s.customPlantIds.map((id) => getPlant(id)).filter((p): p is Plant => Boolean(p));
+  if (picked.length > 0) return { packId: null, plants: picked };
   const spaceTypes = s.spaceTypes ?? STEP_DEFAULTS.spaceTypes;
   const sunlight = s.sunlight ?? STEP_DEFAULTS.sunlight;
   const chosen =
@@ -77,6 +78,18 @@ export function buildSetupBody(s: OnboardingAnswers) {
           source: s.location.source,
         }
       : null,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    timezone: browserTimeZone(),
   };
+}
+
+/** The browser's IANA timezone, or 'UTC' if it reports something unusable (some webviews do). */
+export function browserTimeZone(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (!tz) return 'UTC';
+    new Intl.DateTimeFormat('en', { timeZone: tz });
+    return tz;
+  } catch {
+    return 'UTC';
+  }
 }

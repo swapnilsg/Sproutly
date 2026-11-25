@@ -11,6 +11,10 @@ describe('todayIn', () => {
     expect(todayIn('UTC', evening)).toBe('2026-01-01');
   });
 
+  it('always returns YYYY-MM-DD with zero padding', () => {
+    expect(todayIn('UTC', new Date('2026-03-04T12:00:00Z'))).toBe('2026-03-04');
+  });
+
   it('understands legacy names such as Asia/Calcutta', () => {
     expect(todayIn('Asia/Calcutta', evening)).toBe('2026-01-02');
   });

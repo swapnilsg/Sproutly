@@ -39,6 +39,8 @@ interface OnboardingState {
   firstPlantNickname: { plantId: string; nickname: string } | null;
   /** Step 5: does the user already have the plants? null = not answered (there is no default). */
   plantsOwned: boolean | null;
+  /** Why saving the garden at sign-in failed; shown once on step 5. Not persisted. */
+  saveError: string | null;
   setPendingEmail(email: string | null): void;
   /** Records the step 1 start time; returns true only the first time (per onboarding attempt). */
   markStep1Started(): boolean;
@@ -52,6 +54,7 @@ interface OnboardingState {
   setCityGuessed(): void;
   setFirstPlantNickname(value: { plantId: string; nickname: string } | null): void;
   setPlantsOwned(owned: boolean): void;
+  setSaveError(message: string | null): void;
   /** "Skip for now": fill every unanswered question with its default. */
   fillDefaults(): void;
   reset(): void;
@@ -71,6 +74,7 @@ export const useOnboarding = create<OnboardingState>()(
       cityGuessed: false,
       firstPlantNickname: null,
       plantsOwned: null,
+      saveError: null,
       setPendingEmail: (pendingEmail) => set({ pendingEmail }),
       setSpaceTypes: (spaceTypes) => set({ spaceTypes }),
       setSunlight: (sunlight) => set({ sunlight }),
@@ -89,6 +93,7 @@ export const useOnboarding = create<OnboardingState>()(
       setCityGuessed: () => set({ cityGuessed: true }),
       setFirstPlantNickname: (firstPlantNickname) => set({ firstPlantNickname }),
       setPlantsOwned: (plantsOwned) => set({ plantsOwned }),
+      setSaveError: (saveError) => set({ saveError }),
       fillDefaults: () =>
         set((s) => {
           const spaceTypes = s.spaceTypes ?? STEP_DEFAULTS.spaceTypes;
@@ -129,12 +134,15 @@ export const useOnboarding = create<OnboardingState>()(
           cityGuessed: false,
           firstPlantNickname: null,
           plantsOwned: null,
+          saveError: null,
         }),
     }),
     {
       name: 'sproutly_onboarding_v1',
       // Falls back to memory when storage is unavailable (private mode, blocked cookies).
       storage: createJSONStorage(() => localStorage),
+      // A save error is for this visit only; don't show it again after a reload.
+      partialize: ({ saveError: _saveError, ...rest }) => rest,
     },
   ),
 );

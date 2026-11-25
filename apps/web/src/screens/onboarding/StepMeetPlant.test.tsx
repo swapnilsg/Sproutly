@@ -51,6 +51,11 @@ describe('Step 5 — meet your plant', () => {
     expect(screen.getByRole('heading', { name: 'Do you have this plant yet?' })).toBeVisible();
   });
 
+  it('falls back to the pack when saved picks are no longer in the catalogue', async () => {
+    await atStep5({ packId: null, packChosenFor: null, customPlantIds: ['retired-plant'] });
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Say hi to your basil!');
+  });
+
   it('has no default answer: "Save my garden" waits for one', async () => {
     await atStep5();
     expect(ownership(/^Yes, they’re here/)).not.toBeChecked();

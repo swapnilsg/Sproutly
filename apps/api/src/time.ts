@@ -4,12 +4,15 @@
  * database may not. Always pass timezones through here, never into SQL.
  */
 export function todayIn(timeZone: string, now = new Date()): string {
-  return new Intl.DateTimeFormat('en-CA', {
+  // Assemble from parts rather than relying on any locale's date pattern.
+  const parts = new Intl.DateTimeFormat('en-US', {
     timeZone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).format(now);
+  }).formatToParts(now);
+  const part = (type: 'year' | 'month' | 'day') => parts.find((p) => p.type === type)!.value;
+  return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
 export function isTimeZone(timeZone: string): boolean {

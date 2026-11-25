@@ -140,7 +140,6 @@ describe('POST /onboarding/setup', () => {
       },
     ],
     ['the same plant twice', { pack_id: null, custom_plant_ids: ['mint', 'mint'] }],
-    ['an unknown timezone', { timezone: 'Mars/Olympus_Mons' }],
     ['a nickname over 32 characters', { first_plant_nickname: 'x'.repeat(33) }],
     ['an unsupported space', { space_types: ['garden_bed'] }],
   ])('rejects %s with 422', async (_label, change) => {
@@ -150,6 +149,22 @@ describe('POST /onboarding/setup', () => {
     expect(res.body.error).toBe('validation_failed');
     const { rows } = await ctx.deps.db.query('SELECT count(*)::int AS n FROM gardens');
     expect(rows[0].n).toBe(0);
+  });
+
+  it('falls back to UTC for a timezone it does not recognise, rather than blocking sign-up', async () => {
+    const { token } = await signedIn();
+    const res = await setup(token, { ...answers, timezone: 'Etc/Unknown' });
+    expect(res.status).toBe(201);
+    const { rows } = await ctx.deps.db.query('SELECT timezone FROM users');
+    expect(rows[0].timezone).toBe('UTC');
+  });
+
+  it('returns 404 (not a server error) when the account was deleted', async () => {
+    const { token, userId } = await signedIn();
+    await ctx.deps.db.query('DELETE FROM users WHERE id = $1', [userId]);
+    const res = await setup(token, answers);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('user_not_found');
   });
 
   it('requires a signed-in user', async () => {

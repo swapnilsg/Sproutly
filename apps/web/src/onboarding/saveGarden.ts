@@ -39,15 +39,18 @@ export function useFinishQuestions() {
   const navigate = useNavigate();
   const signedIn = useAuth((s) => s.session !== null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Starts with any error left by a failed save at sign-in (see useCompleteSignIn).
+  const [error, setError] = useState<string | null>(() => useOnboarding.getState().saveError);
 
   async function finish() {
     if (!signedIn) {
+      useOnboarding.getState().setSaveError(null);
       navigate(SAVE_GARDEN_ROUTE);
       return;
     }
     setSaving(true);
     setError(null);
+    useOnboarding.getState().setSaveError(null);
     try {
       const result = await saveGarden();
       if (result === 'saved') {

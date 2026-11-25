@@ -27,15 +27,23 @@ export function useCompleteSignIn(mode: AuthMode) {
 
     let session = res;
     let destination: string | null = null;
-    if (res.onboarding_step === 0 && answersComplete(onboarding)) {
+    let saveFailed = false;
+    let gardenAlreadyExists = false;
+    // No garden yet (step < 6; older accounts may sit at 1 rather than 0).
+    if (res.onboarding_step < 6 && answersComplete(onboarding)) {
       // Save before setting the session, so the guest-only screen doesn't redirect mid-save.
       try {
         if ((await saveGarden(res.token)) === 'saved') {
           session = { ...res, onboarding_step: 6 };
           destination = AFTER_SETUP_ROUTE;
+        } else {
+          gardenAlreadyExists = true;
         }
-      } catch {
-        // Couldn't save right now: step 5 offers "Save my garden" again with the answers intact.
+      } catch (err) {
+        // Couldn't save right now: step 5 explains and offers "Save my garden" again,
+        // with the answers intact.
+        saveFailed = true;
+        onboarding.setSaveError(friendlyError(err));
         destination = '/onboarding/5';
       }
     } else if (res.onboarding_step >= 6) {
@@ -43,9 +51,13 @@ export function useCompleteSignIn(mode: AuthMode) {
       onboarding.reset();
     }
     useAuth.getState().setSession(session);
+    if (gardenAlreadyExists) {
+      // The server is ahead of this response; fetch the real progress before routing.
+      await useAuth.getState().refresh();
+    }
     // Saving the garden is onboarding step 6. A returning user signing in completes no step,
-    // unless they turn out to be new.
-    if (mode === 'save' || res.is_new_user) {
+    // unless they turn out to be new. A failed save isn't a completed step.
+    if (!saveFailed && (mode === 'save' || res.is_new_user)) {
       track('onboarding_step_completed', {
         step: 6,
         method,
