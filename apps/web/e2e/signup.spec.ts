@@ -452,6 +452,27 @@ test.describe('step 7 — reminders', () => {
     expect(await remindersFor(email)).toMatchObject({ notif_permission: 'unsupported' });
   });
 
+  test('notifications already blocked for the site get in-app reminders, no prompt', async ({
+    page,
+    redis,
+  }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(Notification, 'permission', {
+        configurable: true,
+        get: () => 'denied',
+      });
+    });
+    const email = await signUpTo7(page, redis, 'blocked');
+    await expect(
+      page.getByText(
+        'Notifications are turned off for Sproutly in this browser, so we’ll remind you in the app instead.',
+      ),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Sounds good' }).click();
+    await expect(page).toHaveURL(/\/onboarding\/8$/);
+    expect(await remindersFor(email)).toMatchObject({ notif_permission: 'denied' });
+  });
+
   test('step 7 has no accessibility violations and works with the keyboard', async ({
     page,
     redis,
