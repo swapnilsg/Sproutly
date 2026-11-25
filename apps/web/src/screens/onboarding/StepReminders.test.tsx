@@ -110,11 +110,19 @@ describe('Step 7 — reminders', () => {
     expect(remindersCall(calls)).toMatchObject({ permission: 'unsupported' });
   });
 
-  it('offers in-app reminders when the server has no push keys', async () => {
+  it('doesn’t blame the browser when the server has no push keys, and asks again later', async () => {
     fakePush();
-    api(null);
-    await atStep7();
-    expect(await screen.findByRole('button', { name: 'Sounds good' })).toBeVisible();
+    const { calls } = api(null);
+    const router = await atStep7();
+    expect(
+      await screen.findByText(
+        'For now we’ll remind you in the app. We’ll ask about notifications another time.',
+      ),
+    ).toBeVisible();
+    expect(screen.queryByText(/Your browser can’t show notifications/)).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Sounds good' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding/8'));
+    expect(remindersCall(calls)).toMatchObject({ permission: 'later' });
   });
 
   it('shows a friendly error and lets the user try again if saving fails', async () => {

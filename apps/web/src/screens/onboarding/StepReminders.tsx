@@ -17,6 +17,13 @@ import { useAuth } from '../../stores/auth';
 
 const DEFAULT_TIME = '08:00';
 
+const NO_PUSH_NOTE = {
+  browser: 'Your browser can’t show notifications, so we’ll remind you in the app instead.',
+  blocked:
+    'Notifications are turned off for Sproutly in this browser, so we’ll remind you in the app instead.',
+  server: 'For now we’ll remind you in the app. We’ll ask about notifications another time.',
+};
+
 /** Snap "HH:MM" to the nearest quarter hour (the server only accepts :00, :15, :30, :45). */
 export function toQuarterHour(value: string): string {
   const match = /^(\d{1,2}):(\d{2})/.exec(value);
@@ -54,9 +61,18 @@ export function StepReminders() {
       .catch(() => {});
   }, []);
 
-  // Already blocked for this site: no prompt would appear, so offer in-app reminders instead.
-  const blocked = notificationsBlocked();
-  const canPush = pushSupported() && Boolean(vapidKey) && !blocked;
+  // Why there's no "Turn on reminders" (null = there is one). Each gets honest wording:
+  // the browser can't do push, the user already blocked it here, or push isn't set up on
+  // the server yet (missing VAPID keys) — which is not the browser's fault.
+  const noPushReason: 'browser' | 'blocked' | 'server' | null = !pushSupported()
+    ? 'browser'
+    : notificationsBlocked()
+      ? 'blocked'
+      : vapidKey === null
+        ? 'server'
+        : null;
+  const blocked = noPushReason === 'blocked';
+  const canPush = noPushReason === null && Boolean(vapidKey);
   const loading = vapidKey === undefined;
   const reminderTime = toQuarterHour(time);
 
@@ -151,9 +167,7 @@ export function StepReminders() {
         ) : (
           <p className="reminders-note">
             <InfoIcon />
-            {blocked
-              ? 'Notifications are turned off for Sproutly in this browser, so we’ll remind you in the app instead.'
-              : 'Your browser can’t show notifications, so we’ll remind you in the app instead.'}
+            {NO_PUSH_NOTE[noPushReason ?? 'browser']}
           </p>
         )}
       </div>
@@ -186,7 +200,19 @@ export function StepReminders() {
         ) : (
           <Button
             className="reminders-cta"
-            onClick={() => void save({ permission: blocked ? 'denied' : 'unsupported' }, 'skip')}
+            onClick={() =>
+              void save(
+                // No push on the server yet: the user hasn't been asked, so ask again later.
+                {
+                  permission: blocked
+                    ? 'denied'
+                    : noPushReason === 'server'
+                      ? 'later'
+                      : 'unsupported',
+                },
+                'skip',
+              )
+            }
             loading={busy === 'skip'}
           >
             Sounds good
